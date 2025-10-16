@@ -1526,59 +1526,343 @@ print("\\n🎉 ¡Cálculos completados exitosamente!")
         self.actualizar_numeros()
     
     def crear_botones_control(self, parent):
-        """Crea los botones de control"""
-        botones_frame = tk.Frame(parent, bg=self.colores['panel'], height=70)
-        botones_frame.pack(fill=tk.X, padx=15, pady=(0, 15))
-        botones_frame.pack_propagate(False)
+        """Crea los botones de control con barra deslizadora"""
+        # Frame contenedor principal para los botones
+        contenedor_botones = tk.Frame(parent, bg=self.colores['panel'], height=80)
+        contenedor_botones.pack(fill=tk.X, padx=15, pady=(0, 15))
+        contenedor_botones.pack_propagate(False)
         
-        # Estilo de botones
+        # Canvas para permitir scroll horizontal
+        canvas_botones = tk.Canvas(contenedor_botones, 
+                                 bg=self.colores['panel'], 
+                                 height=70,
+                                 highlightthickness=0)
+        canvas_botones.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        
+        # Scrollbar horizontal
+        scrollbar_h = tk.Scrollbar(contenedor_botones, 
+                                 orient=tk.HORIZONTAL, 
+                                 command=canvas_botones.xview,
+                                 bg=self.colores['borde'],
+                                 troughcolor=self.colores['panel'],
+                                 activebackground=self.colores['azul'])
+        scrollbar_h.pack(side=tk.BOTTOM, fill=tk.X)
+        canvas_botones.configure(xscrollcommand=scrollbar_h.set)
+        
+        # Frame interno para los botones
+        botones_frame = tk.Frame(canvas_botones, bg=self.colores['panel'])
+        canvas_botones.create_window((0, 0), window=botones_frame, anchor="nw")
+        
+        # Estilo de botones mejorado
         btn_config = {
-            'font': ("Segoe UI", 12, "bold"),
+            'font': ("Segoe UI", 11, "bold"),
             'relief': tk.FLAT,
             'cursor': 'hand2',
-            'pady': 12,
-            'padx': 25
+            'pady': 10,
+            'padx': 20,
+            'width': 12,  # Ancho fijo para consistencia
+            'height': 2   # Altura fija
         }
         
-        # Botón Compilar
-        btn_compilar = tk.Button(botones_frame,
-                               text="🚀 COMPILAR",
-                               bg=self.colores['verde'],
-                               fg='white',
-                               activebackground='#2ea043',
-                               command=self.compilar_codigo,
-                               **btn_config)
-        btn_compilar.pack(side=tk.LEFT, padx=(0, 10))
+        # Lista de botones con sus configuraciones
+        botones_info = [
+            {
+                'text': "🚀 COMPILAR",
+                'bg': self.colores['verde'],
+                'fg': 'white',
+                'active_bg': '#2ea043',
+                'command': self.compilar_codigo,
+                'tooltip': 'Analiza el código Python completo'
+            },
+            {
+                'text': "🧹 LIMPIAR",
+                'bg': self.colores['amarillo'],
+                'fg': 'white',
+                'active_bg': '#bf8700',
+                'command': self.limpiar_codigo,
+                'tooltip': 'Limpia todo el contenido del editor'
+            },
+            {
+                'text': "📝 EJEMPLO",
+                'bg': self.colores['azul'],
+                'fg': 'white',
+                'active_bg': '#1f6feb',
+                'command': self.cargar_ejemplo,
+                'tooltip': 'Carga código de ejemplo para probar'
+            },
+            {
+                'text': "📚 REGLAS",
+                'bg': '#6f42c1',  # Morado
+                'fg': 'white',
+                'active_bg': '#5a2d91',
+                'command': self.mostrar_reglas_ventana,
+                'tooltip': 'Muestra las reglas gramaticales en ventana separada'
+            },
+            {
+                'text': "💾 GUARDAR",
+                'bg': '#28a745',  # Verde oscuro
+                'fg': 'white',
+                'active_bg': '#1e7e34',
+                'command': self.guardar_codigo,
+                'tooltip': 'Guarda el código actual en un archivo'
+            },
+            {
+                'text': "📂 ABRIR",
+                'bg': '#17a2b8',  # Cyan
+                'fg': 'white',
+                'active_bg': '#138496',
+                'command': self.abrir_codigo,
+                'tooltip': 'Abre un archivo de código Python'
+            },
+            {
+                'text': "❓ AYUDA",
+                'bg': self.colores['borde'],
+                'fg': self.colores['texto'],
+                'active_bg': '#484f58',
+                'command': self.mostrar_ayuda,
+                'tooltip': 'Muestra información de ayuda'
+            }
+        ]
         
-        # Botón Limpiar
-        btn_limpiar = tk.Button(botones_frame,
-                              text="🧹 LIMPIAR",
-                              bg=self.colores['amarillo'],
-                              fg='white',
-                              activebackground='#bf8700',
-                              command=self.limpiar_codigo,
-                              **btn_config)
-        btn_limpiar.pack(side=tk.LEFT, padx=(0, 10))
+        # Crear botones
+        self.botones = []
+        for i, info in enumerate(botones_info):
+            btn = tk.Button(botones_frame,
+                          text=info['text'],
+                          bg=info['bg'],
+                          fg=info['fg'],
+                          activebackground=info['active_bg'],
+                          command=info['command'],
+                          **btn_config)
+            btn.pack(side=tk.LEFT, padx=(0, 10), pady=5)
+            
+            # Agregar tooltip
+            self.crear_tooltip(btn, info['tooltip'])
+            self.botones.append(btn)
         
-        # Botón Ejemplo
-        btn_ejemplo = tk.Button(botones_frame,
-                              text="📝 EJEMPLO",
-                              bg=self.colores['azul'],
-                              fg='white',
-                              activebackground='#1f6feb',
-                              command=self.cargar_ejemplo,
-                              **btn_config)
-        btn_ejemplo.pack(side=tk.LEFT, padx=(0, 10))
+        # Configurar el scroll region después de que todos los botones estén creados
+        botones_frame.update_idletasks()
+        canvas_botones.configure(scrollregion=canvas_botones.bbox("all"))
         
-        # Botón Ayuda
-        btn_ayuda = tk.Button(botones_frame,
-                            text="❓ AYUDA",
-                            bg=self.colores['borde'],
-                            fg=self.colores['texto'],
-                            activebackground='#484f58',
-                            command=self.mostrar_ayuda,
-                            **btn_config)
-        btn_ayuda.pack(side=tk.RIGHT)
+        # Bind para scroll con rueda del mouse
+        def scroll_horizontal(event):
+            canvas_botones.xview_scroll(int(-1 * (event.delta / 120)), "units")
+        
+        canvas_botones.bind("<MouseWheel>", scroll_horizontal)
+        botones_frame.bind("<MouseWheel>", scroll_horizontal)
+    
+    def crear_tooltip(self, widget, text):
+        """Crea un tooltip para un widget"""
+        def mostrar_tooltip(event):
+            tooltip = tk.Toplevel()
+            tooltip.wm_overrideredirect(True)
+            tooltip.wm_geometry(f"+{event.x_root+10}+{event.y_root+10}")
+            tooltip.configure(bg=self.colores['borde'])
+            
+            label = tk.Label(tooltip, 
+                           text=text,
+                           bg=self.colores['borde'],
+                           fg=self.colores['texto'],
+                           font=("Segoe UI", 9),
+                           relief=tk.SOLID,
+                           borderwidth=1,
+                           padx=5,
+                           pady=3)
+            label.pack()
+            
+            # Destruir tooltip después de 3 segundos
+            tooltip.after(3000, tooltip.destroy)
+        
+        def ocultar_tooltip(event):
+            pass
+        
+        widget.bind("<Enter>", mostrar_tooltip)
+        widget.bind("<Leave>", ocultar_tooltip)
+    
+    def mostrar_reglas_ventana(self):
+        """Muestra las reglas gramaticales en una ventana separada"""
+        ventana_reglas = tk.Toplevel(self.ventana)
+        ventana_reglas.title("📚 Reglas Gramaticales de Python")
+        ventana_reglas.geometry("800x600")
+        ventana_reglas.configure(bg=self.colores['fondo'])
+        
+        # Header
+        header = tk.Frame(ventana_reglas, bg=self.colores['azul'], height=60)
+        header.pack(fill=tk.X)
+        header.pack_propagate(False)
+        
+        tk.Label(header,
+                text="📚 REGLAS GRAMATICALES DE PYTHON",
+                font=("Segoe UI", 16, "bold"),
+                bg=self.colores['azul'],
+                fg='white').pack(pady=15)
+        
+        # Área de texto con scroll
+        texto_reglas = scrolledtext.ScrolledText(ventana_reglas,
+                                               font=("Consolas", 10),
+                                               bg=self.colores['resultados'],
+                                               fg=self.colores['texto'],
+                                               relief=tk.FLAT,
+                                               wrap=tk.WORD)
+        texto_reglas.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
+        
+        # Contenido de reglas (reutilizando el mismo contenido)
+        reglas_contenido = """
+╔══════════════════════════════════════════════════════════════╗
+║                 REGLAS GRAMATICALES DE PYTHON                ║
+╚══════════════════════════════════════════════════════════════╝
+
+📝 ESTRUCTURA GENERAL DEL LENGUAJE:
+────────────────────────────────────────────────────────────────
+
+🔹 PROGRAMA:
+   programa ::= (declaracion | sentencia)*
+
+🔹 DECLARACIONES:
+   declaracion ::= def_funcion | def_clase | import_stmt
+   
+   def_funcion ::= 'def' IDENTIFICADOR '(' parametros ')' ':' bloque
+   parametros  ::= (IDENTIFICADOR (',' IDENTIFICADOR)*)?
+   
+   def_clase   ::= 'class' IDENTIFICADOR ('(' herencia ')')? ':' bloque
+   herencia    ::= IDENTIFICADOR (',' IDENTIFICADOR)*
+   
+   import_stmt ::= 'import' modulo | 'from' modulo 'import' nombres
+   modulo      ::= IDENTIFICADOR ('.' IDENTIFICADOR)*
+   nombres     ::= IDENTIFICADOR (',' IDENTIFICADOR)*
+
+📐 ESTRUCTURAS DE CONTROL:
+────────────────────────────────────────────────────────────────
+
+🔹 CONDICIONALES:
+   if_stmt   ::= 'if' expresion ':' bloque elif_clause* else_clause?
+   elif_clause ::= 'elif' expresion ':' bloque
+   else_clause ::= 'else' ':' bloque
+
+🔹 BUCLES:
+   for_stmt   ::= 'for' IDENTIFICADOR 'in' expresion ':' bloque
+   while_stmt ::= 'while' expresion ':' bloque
+
+🔹 MANEJO DE EXCEPCIONES:
+   try_stmt     ::= 'try' ':' bloque except_clause+ finally_clause?
+                  | 'try' ':' bloque finally_clause
+   except_clause ::= 'except' (tipo_excepcion ('as' IDENTIFICADOR)?)? ':' bloque
+   finally_clause ::= 'finally' ':' bloque
+
+🔹 CONTEXTO:
+   with_stmt ::= 'with' expresion ('as' IDENTIFICADOR)? ':' bloque
+
+📊 EXPRESIONES Y OPERADORES:
+────────────────────────────────────────────────────────────────
+
+🔹 EXPRESIONES:
+   expresion ::= expr_or
+   expr_or   ::= expr_and ('or' expr_and)*
+   expr_and  ::= expr_not ('and' expr_not)*
+   expr_not  ::= 'not' expr_not | comparacion
+   
+   comparacion ::= expr_aritmetica (comp_op expr_aritmetica)*
+   comp_op     ::= '<' | '>' | '==' | '>=' | '<=' | '!=' | 'in' | 'not' 'in' | 'is' | 'is' 'not'
+
+🔹 OPERADORES ARITMÉTICOS:
+   expr_aritmetica ::= termino (('+' | '-') termino)*
+   termino        ::= factor (('*' | '/' | '//' | '%') factor)*
+   factor         ::= ('+' | '-')? potencia
+   potencia       ::= atom ('**' factor)?
+
+🔹 ÁTOMICOS:
+   atom ::= IDENTIFICADOR | NUMERO | STRING | 'True' | 'False' | 'None'
+          | '(' expresion ')' | lista | diccionario | llamada_funcion
+
+📚 TOKENS Y LEXEMAS:
+────────────────────────────────────────────────────────────────
+
+🔹 IDENTIFICADORES:
+   IDENTIFICADOR ::= (letra | '_') (letra | digito | '_')*
+   letra         ::= [a-zA-Z]
+   digito        ::= [0-9]
+
+🔹 NÚMEROS:
+   NUMERO ::= ENTERO | DECIMAL | CIENTIFICO | BINARIO | OCTAL | HEXADECIMAL
+   
+   ENTERO     ::= digito+
+   DECIMAL    ::= digito+ '.' digito* | '.' digito+
+   CIENTIFICO ::= (ENTERO | DECIMAL) [eE] [+-]? digito+
+   BINARIO    ::= '0' [bB] [01]+
+   OCTAL      ::= '0' [oO] [0-7]+
+   HEXADECIMAL::= '0' [xX] [0-9a-fA-F]+
+
+🔹 CADENAS:
+   STRING ::= STRING_SIMPLE | STRING_TRIPLE
+   STRING_SIMPLE ::= ('"' contenido_simple '"') | ("'" contenido_simple "'")
+   STRING_TRIPLE ::= ('"""' contenido_triple '"""') | ("'''" contenido_triple "'''")
+
+🔹 PALABRAS RESERVADAS:
+   False    None     True     and      as       assert   async    await
+   break    class    continue def      del      elif     else     except
+   finally  for      from     global   if       import   in       is
+   lambda   nonlocal not      or       pass     raise    return   try
+   while    with     yield
+
+✅ REGLAS DE CORRECCIÓN:
+────────────────────────────────────────────────────────────────
+
+• Toda función debe terminar con ':' seguido de bloque indentado
+• Toda estructura de control (if, for, while) requiere ':'
+• Los paréntesis deben estar balanceados
+• Las comillas de strings deben estar cerradas
+• Los identificadores no pueden ser palabras reservadas
+• La indentación debe ser consistente dentro del mismo bloque
+• Las variables deben estar definidas antes de su uso
+• Las funciones deben estar declaradas antes de ser llamadas
+"""
+        
+        texto_reglas.insert('1.0', reglas_contenido)
+        texto_reglas.config(state=tk.DISABLED)
+    
+    def guardar_codigo(self):
+        """Guarda el código actual en un archivo"""
+        from tkinter import filedialog
+        
+        archivo = filedialog.asksaveasfilename(
+            title="Guardar código Python",
+            defaultextension=".py",
+            filetypes=[("Archivos Python", "*.py"), ("Todos los archivos", "*.*")]
+        )
+        
+        if archivo:
+            try:
+                with open(archivo, 'w', encoding='utf-8') as f:
+                    contenido = self.editor.get('1.0', tk.END)
+                    f.write(contenido.rstrip())  # Remover salto de línea final extra
+                
+                messagebox.showinfo("✅ Éxito", f"Código guardado exitosamente en:\n{archivo}")
+                self.status.config(text="💾 Código guardado", bg=self.colores['verde'])
+            except Exception as e:
+                messagebox.showerror("❌ Error", f"No se pudo guardar el archivo:\n{str(e)}")
+    
+    def abrir_codigo(self):
+        """Abre un archivo de código Python"""
+        from tkinter import filedialog
+        
+        archivo = filedialog.askopenfilename(
+            title="Abrir código Python",
+            filetypes=[("Archivos Python", "*.py"), ("Archivos de texto", "*.txt"), ("Todos los archivos", "*.*")]
+        )
+        
+        if archivo:
+            try:
+                with open(archivo, 'r', encoding='utf-8') as f:
+                    contenido = f.read()
+                
+                self.editor.delete('1.0', tk.END)
+                self.editor.insert('1.0', contenido)
+                self.actualizar_numeros()
+                
+                messagebox.showinfo("✅ Éxito", f"Archivo cargado exitosamente:\n{archivo}")
+                self.status.config(text="📂 Archivo cargado", bg=self.colores['azul'])
+            except Exception as e:
+                messagebox.showerror("❌ Error", f"No se pudo abrir el archivo:\n{str(e)}")
     
     def crear_panel_resultados(self, parent):
         """Crea el panel de resultados (derecha)"""
@@ -1601,61 +1885,287 @@ print("\\n🎉 ¡Cálculos completados exitosamente!")
         self.crear_notebook(resultados_frame)
     
     def crear_notebook(self, parent):
-        """Crea el notebook con pestañas"""
-        # Frame para notebook
-        notebook_frame = tk.Frame(parent, bg=self.colores['panel'])
-        notebook_frame.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
+        """Crea el notebook con pestañas mejorado con scroll"""
+        # Frame principal para el notebook
+        notebook_container = tk.Frame(parent, bg=self.colores['panel'])
+        notebook_container.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
         
-        # Configurar estilo del notebook
-        style = ttk.Style()
-        style.theme_use('clam')
-        style.configure('Modern.TNotebook',
-                       background=self.colores['panel'],
-                       borderwidth=0)
-        style.configure('Modern.TNotebook.Tab',
-                       background=self.colores['borde'],
-                       foreground=self.colores['texto'],
-                       padding=[25, 12],
-                       font=("Segoe UI", 11, "bold"))
-        style.map('Modern.TNotebook.Tab',
-                 background=[('selected', self.colores['azul']),
-                           ('active', self.colores['azul'])],
-                 foreground=[('selected', 'white'),
-                           ('active', 'white')])
+        # Frame superior para pestañas con scroll
+        pestañas_frame = tk.Frame(notebook_container, bg=self.colores['panel'], height=50)
+        pestañas_frame.pack(fill=tk.X, pady=(0, 5))
+        pestañas_frame.pack_propagate(False)
         
-        # Crear notebook
-        self.notebook = ttk.Notebook(notebook_frame, style='Modern.TNotebook')
-        self.notebook.pack(fill=tk.BOTH, expand=True)
+        # Canvas para scroll horizontal de pestañas
+        canvas_pestañas = tk.Canvas(pestañas_frame, 
+                                  bg=self.colores['panel'], 
+                                  height=45,
+                                  highlightthickness=0)
+        canvas_pestañas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         
-        # Crear pestañas
-        self.crear_pestañas()
+        # Scrollbar horizontal para pestañas
+        scrollbar_pestañas = tk.Scrollbar(pestañas_frame, 
+                                        orient=tk.HORIZONTAL, 
+                                        command=canvas_pestañas.xview,
+                                        bg=self.colores['borde'],
+                                        troughcolor=self.colores['panel'],
+                                        activebackground=self.colores['azul'])
+        scrollbar_pestañas.pack(side=tk.BOTTOM, fill=tk.X)
+        canvas_pestañas.configure(xscrollcommand=scrollbar_pestañas.set)
+        
+        # Frame interno para botones de pestañas
+        botones_pestañas_frame = tk.Frame(canvas_pestañas, bg=self.colores['panel'])
+        canvas_pestañas.create_window((0, 0), window=botones_pestañas_frame, anchor="nw")
+        
+        # Frame para contenido de pestañas
+        self.contenido_frame = tk.Frame(notebook_container, bg=self.colores['resultados'])
+        self.contenido_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Crear botones de pestañas y frames de contenido
+        self.crear_pestañas_mejoradas(botones_pestañas_frame, canvas_pestañas)
     
-    def crear_pestañas(self):
-        """Crea todas las pestañas"""
-        # Pestaña Resumen
-        frame_resumen = tk.Frame(self.notebook, bg=self.colores['resultados'])
-        self.notebook.add(frame_resumen, text="📋 RESUMEN")
-        self.texto_resumen = self.crear_area_texto(frame_resumen)
+    def crear_pestañas_mejoradas(self, parent_botones, canvas_pestañas):
+        """Crea las pestañas con botones mejorados"""
+        # Lista de pestañas con información
+        pestañas_info = [
+            {
+                'id': 'resumen',
+                'texto': '📋 RESUMEN',
+                'descripcion': 'Vista general de resultados',
+                'color': self.colores['verde'],
+                'tipo': 'texto'
+            },
+            {
+                'id': 'tokens',
+                'texto': '🔤 TOKENS',
+                'descripcion': 'Lista de tokens generados',
+                'color': self.colores['azul'],
+                'tipo': 'tabla',
+                'columnas': ['No.', 'Tipo', 'Valor', 'Línea']
+            },
+            {
+                'id': 'sintactico',
+                'texto': '🔧 SINTÁCTICO',
+                'descripcion': 'Errores de sintaxis',
+                'color': self.colores['amarillo'],
+                'tipo': 'mixto'
+            },
+            {
+                'id': 'semantico',
+                'texto': '🧠 SEMÁNTICO',
+                'descripcion': 'Errores semánticos',
+                'color': '#6f42c1',  # Morado
+                'tipo': 'mixto'
+            },
+            {
+                'id': 'reglas',
+                'texto': '📚 REGLAS GRAM.',
+                'descripcion': 'Reglas gramaticales de Python',
+                'color': '#17a2b8',  # Cyan
+                'tipo': 'texto'
+            },
+            {
+                'id': 'estadisticas',
+                'texto': '📈 ESTADÍSTICAS',
+                'descripcion': 'Métricas del código',
+                'color': self.colores['rojo'],
+                'tipo': 'tabla',
+                'columnas': ['Métrica', 'Valor', 'Porcentaje']
+            }
+        ]
         
-        # Pestaña Tokens
-        frame_tokens = tk.Frame(self.notebook, bg=self.colores['resultados'])
-        self.notebook.add(frame_tokens, text="🔤 TOKENS")
-        self.texto_tokens = self.crear_area_texto(frame_tokens)
+        # Variables para manejo de pestañas
+        self.pestañas_activa = 'resumen'
+        self.botones_pestañas = {}
+        self.frames_contenido = {}
+        self.areas_texto = {}
+        self.tablas = {}
         
-        # Pestaña Sintáctico
-        frame_sintactico = tk.Frame(self.notebook, bg=self.colores['resultados'])
-        self.notebook.add(frame_sintactico, text="🔧 SINTÁCTICO")
-        self.texto_sintactico = self.crear_area_texto(frame_sintactico)
+        # Crear botones de pestañas
+        for i, info in enumerate(pestañas_info):
+            # Crear botón de pestaña
+            btn = tk.Button(parent_botones,
+                          text=info['texto'],
+                          font=("Segoe UI", 10, "bold"),
+                          bg=info['color'] if info['id'] == 'resumen' else self.colores['borde'],
+                          fg='white' if info['id'] == 'resumen' else self.colores['texto'],
+                          relief=tk.FLAT,
+                          cursor='hand2',
+                          padx=15,
+                          pady=8,
+                          width=15,
+                          command=lambda x=info['id']: self.cambiar_pestaña(x))
+            btn.pack(side=tk.LEFT, padx=(0, 5), pady=2)
+            
+            # Agregar tooltip
+            self.crear_tooltip(btn, info['descripcion'])
+            
+            # Guardar referencia
+            self.botones_pestañas[info['id']] = {
+                'boton': btn,
+                'color': info['color'],
+                'info': info
+            }
+            
+            # Crear frame de contenido
+            frame_contenido = tk.Frame(self.contenido_frame, bg=self.colores['resultados'])
+            if info['id'] == 'resumen':
+                frame_contenido.pack(fill=tk.BOTH, expand=True)
+            
+            self.frames_contenido[info['id']] = frame_contenido
+            
+            # Crear área según el tipo
+            if info['tipo'] == 'tabla':
+                tabla, frame_tabla = self.crear_area_tabla(frame_contenido, info['columnas'])
+                self.tablas[info['id']] = tabla
+                self.areas_texto[info['id']] = None  # Para compatibilidad
+            elif info['tipo'] == 'mixto':
+                # Para pestañas mixtas, crear un notebook interno
+                notebook_mixto = ttk.Notebook(frame_contenido)
+                notebook_mixto.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
+                
+                # Frame para tabla
+                frame_tabla_tab = tk.Frame(notebook_mixto, bg=self.colores['resultados'])
+                notebook_mixto.add(frame_tabla_tab, text="📊 Tabla")
+                
+                # Frame para texto
+                frame_texto_tab = tk.Frame(notebook_mixto, bg=self.colores['resultados'])
+                notebook_mixto.add(frame_texto_tab, text="📝 Detalle")
+                
+                # Crear tabla
+                if info['id'] == 'sintactico':
+                    tabla, _ = self.crear_area_tabla(frame_tabla_tab, ['No.', 'Línea', 'Columna', 'Descripción'])
+                else:  # semántico
+                    tabla, _ = self.crear_area_tabla(frame_tabla_tab, ['No.', 'Línea', 'Columna', 'Descripción'])
+                
+                self.tablas[info['id']] = tabla
+                
+                # Crear área de texto para detalles
+                area_texto = self.crear_area_texto(frame_texto_tab)
+                self.areas_texto[info['id']] = area_texto
+            else:
+                # Crear área de texto normal
+                area_texto = self.crear_area_texto(frame_contenido)
+                self.areas_texto[info['id']] = area_texto
+                self.tablas[info['id']] = None
         
-        # Pestaña Semántico
-        frame_semantico = tk.Frame(self.notebook, bg=self.colores['resultados'])
-        self.notebook.add(frame_semantico, text="🧠 SEMÁNTICO")
-        self.texto_semantico = self.crear_area_texto(frame_semantico)
+        # Configurar scroll region
+        parent_botones.update_idletasks()
+        canvas_pestañas.configure(scrollregion=canvas_pestañas.bbox("all"))
         
-        # Pestaña Estadísticas
-        frame_stats = tk.Frame(self.notebook, bg=self.colores['resultados'])
-        self.notebook.add(frame_stats, text="📈 ESTADÍSTICAS")
-        self.texto_stats = self.crear_area_texto(frame_stats)
+        # Bind para scroll con rueda del mouse en pestañas
+        def scroll_pestañas(event):
+            canvas_pestañas.xview_scroll(int(-1 * (event.delta / 120)), "units")
+        
+        canvas_pestañas.bind("<MouseWheel>", scroll_pestañas)
+        parent_botones.bind("<MouseWheel>", scroll_pestañas)
+        
+        # Asignar las áreas de texto a las variables existentes para compatibilidad
+        self.texto_resumen = self.areas_texto['resumen']
+        self.texto_tokens = self.areas_texto['tokens']  # Será None, usaremos tabla
+        self.texto_sintactico = self.areas_texto['sintactico']
+        self.texto_semantico = self.areas_texto['semantico']
+        self.texto_reglas = self.areas_texto['reglas']
+        self.texto_stats = self.areas_texto['estadisticas']  # Será None, usaremos tabla
+    
+    def cambiar_pestaña(self, pestaña_id):
+        """Cambia la pestaña activa"""
+        # Ocultar frame actual
+        if self.pestañas_activa in self.frames_contenido:
+            self.frames_contenido[self.pestañas_activa].pack_forget()
+            
+            # Cambiar color del botón anterior a inactivo
+            btn_anterior = self.botones_pestañas[self.pestañas_activa]['boton']
+            btn_anterior.config(bg=self.colores['borde'], fg=self.colores['texto'])
+        
+        # Mostrar nueva pestaña
+        if pestaña_id in self.frames_contenido:
+            self.frames_contenido[pestaña_id].pack(fill=tk.BOTH, expand=True)
+            
+            # Cambiar color del botón nuevo a activo
+            info_nueva = self.botones_pestañas[pestaña_id]
+            btn_nuevo = info_nueva['boton']
+            btn_nuevo.config(bg=info_nueva['color'], fg='white')
+            
+            # Actualizar pestaña activa
+            self.pestañas_activa = pestaña_id
+            
+            # Actualizar status
+            descripcion = info_nueva['info']['descripcion']
+            self.status.config(text=f"📊 Viendo: {descripcion}", bg=info_nueva['color'])
+    
+    def poblar_tabla_tokens(self, tokens):
+        """Pobla la tabla de tokens"""
+        tabla = self.tablas['tokens']
+        
+        # Limpiar tabla
+        for item in tabla.get_children():
+            tabla.delete(item)
+        
+        # Agregar tokens
+        for i, token in enumerate(tokens[:100], 1):  # Limitar a 100 tokens
+            tabla.insert('', 'end', values=(
+                i,
+                token.tipo.value,
+                str(token.valor)[:30] + ("..." if len(str(token.valor)) > 30 else ""),
+                token.linea
+            ))
+    
+    def poblar_tabla_errores(self, pestaña_id, errores):
+        """Pobla la tabla de errores (sintáctico o semántico)"""
+        tabla = self.tablas[pestaña_id]
+        
+        # Limpiar tabla
+        for item in tabla.get_children():
+            tabla.delete(item)
+        
+        # Agregar errores
+        for i, error in enumerate(errores, 1):
+            desc = error.mensaje[:50] + ("..." if len(error.mensaje) > 50 else "")
+            tabla.insert('', 'end', values=(
+                i,
+                error.linea,
+                error.columna,
+                desc
+            ))
+    
+    def poblar_tabla_estadisticas(self, resultado):
+        """Pobla la tabla de estadísticas"""
+        tabla = self.tablas['estadisticas']
+        
+        # Limpiar tabla
+        for item in tabla.get_children():
+            tabla.delete(item)
+        
+        # Calcular estadísticas
+        total_tokens = len(resultado['tokens'])
+        palabras_reservadas = len([t for t in resultado['tokens'] if t.tipo == TipoToken.PALABRA_RESERVADA])
+        identificadores = len([t for t in resultado['tokens'] if t.tipo == TipoToken.IDENTIFICADOR])
+        numeros = len([t for t in resultado['tokens'] if t.tipo == TipoToken.NUMERO])
+        strings = len([t for t in resultado['tokens'] if t.tipo == TipoToken.STRING])
+        operadores = len([t for t in resultado['tokens'] if t.tipo == TipoToken.OPERADOR])
+        delimitadores = len([t for t in resultado['tokens'] if t.tipo == TipoToken.DELIMITADOR])
+        
+        # Datos para la tabla
+        datos_estadisticas = [
+            ("Total de tokens", str(total_tokens), "100.0%"),
+            ("Palabras reservadas", str(palabras_reservadas), f"{(palabras_reservadas/max(total_tokens,1)*100):.1f}%"),
+            ("Identificadores", str(identificadores), f"{(identificadores/max(total_tokens,1)*100):.1f}%"),
+            ("Números", str(numeros), f"{(numeros/max(total_tokens,1)*100):.1f}%"),
+            ("Strings", str(strings), f"{(strings/max(total_tokens,1)*100):.1f}%"),
+            ("Operadores", str(operadores), f"{(operadores/max(total_tokens,1)*100):.1f}%"),
+            ("Delimitadores", str(delimitadores), f"{(delimitadores/max(total_tokens,1)*100):.1f}%"),
+            ("", "", ""),
+            ("Errores léxicos", str(len(resultado['errores_lexicos'])), ""),
+            ("Errores sintácticos", str(len(resultado['errores_sintacticos'])), ""),
+            ("Errores semánticos", str(len(resultado['errores_semanticos'])), ""),
+            ("Total errores", str(resultado['total_errores']), ""),
+            ("", "", ""),
+            ("Estado general", "✅ ÉXITO" if resultado['exito'] else "❌ CON ERRORES", "")
+        ]
+        
+        # Agregar datos a la tabla
+        for metrica, valor, porcentaje in datos_estadisticas:
+            tabla.insert('', 'end', values=(metrica, valor, porcentaje))
     
     def crear_area_texto(self, parent):
         """Crea un área de texto para resultados"""
@@ -1667,6 +2177,66 @@ print("\\n🎉 ¡Cálculos completados exitosamente!")
                                        wrap=tk.WORD)
         area.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
         return area
+    
+    def crear_area_tabla(self, parent, columnas):
+        """Crea un área con tabla profesional usando Treeview"""
+        # Frame contenedor
+        frame_tabla = tk.Frame(parent, bg=self.colores['resultados'])
+        frame_tabla.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
+        
+        # Estilo para el Treeview
+        style = ttk.Style()
+        style.theme_use('clam')
+        
+        # Configurar colores del Treeview
+        style.configure("Custom.Treeview",
+                       background=self.colores['resultados'],
+                       foreground=self.colores['texto'],
+                       fieldbackground=self.colores['resultados'],
+                       borderwidth=0,
+                       font=("Segoe UI", 10))
+        
+        style.configure("Custom.Treeview.Heading",
+                       background=self.colores['azul'],
+                       foreground='white',
+                       relief='flat',
+                       font=("Segoe UI", 11, "bold"))
+        
+        style.map("Custom.Treeview",
+                 background=[('selected', self.colores['azul'])],
+                 foreground=[('selected', 'white')])
+        
+        # Crear Treeview
+        tabla = ttk.Treeview(frame_tabla, 
+                           columns=columnas,
+                           show='tree headings',
+                           style="Custom.Treeview",
+                           height=15)
+        
+        # Configurar columnas
+        tabla.heading('#0', text='', anchor='w')
+        tabla.column('#0', width=0, stretch=False)  # Ocultar primera columna
+        
+        for col in columnas:
+            tabla.heading(col, text=col, anchor='center')
+            if col == 'Descripción' or col == 'Sugerencia':
+                tabla.column(col, width=300, anchor='w')
+            elif col == 'No.':
+                tabla.column(col, width=50, anchor='center')
+            else:
+                tabla.column(col, width=100, anchor='center')
+        
+        # Scrollbars
+        scrollbar_v = ttk.Scrollbar(frame_tabla, orient="vertical", command=tabla.yview)
+        scrollbar_h = ttk.Scrollbar(frame_tabla, orient="horizontal", command=tabla.xview)
+        tabla.configure(yscrollcommand=scrollbar_v.set, xscrollcommand=scrollbar_h.set)
+        
+        # Pack elementos
+        tabla.pack(side="left", fill="both", expand=True)
+        scrollbar_v.pack(side="right", fill="y")
+        scrollbar_h.pack(side="bottom", fill="x")
+        
+        return tabla, frame_tabla
     
     def actualizar_numeros(self, event=None):
         """Actualiza los números de línea"""
@@ -1714,16 +2284,35 @@ print("\\n🎉 ¡Cálculos completados exitosamente!")
     
     def mostrar_resultados(self, resultado):
         """Muestra los resultados de la compilación"""
-        # Limpiar todas las áreas
-        for area in [self.texto_resumen, self.texto_tokens, self.texto_sintactico, 
-                    self.texto_semantico, self.texto_stats]:
-            area.delete('1.0', tk.END)
+        # Limpiar todas las áreas de texto
+        for area in [self.texto_resumen, self.texto_sintactico, 
+                    self.texto_semantico, self.texto_reglas]:
+            if area:
+                area.delete('1.0', tk.END)
+        
+        # Limpiar todas las tablas
+        for tabla_id, tabla in self.tablas.items():
+            if tabla:
+                for item in tabla.get_children():
+                    tabla.delete(item)
         
         # Actualizar status
         if resultado['exito']:
             self.status.config(text="✅ Compilación exitosa", bg=self.colores['verde'])
         else:
             self.status.config(text=f"❌ {resultado['total_errores']} errores", bg=self.colores['rojo'])
+        
+        # Poblar tablas específicas
+        if resultado['tokens']:
+            self.poblar_tabla_tokens(resultado['tokens'])
+        
+        if resultado['errores_sintacticos']:
+            self.poblar_tabla_errores('sintactico', resultado['errores_sintacticos'])
+        
+        if resultado['errores_semanticos']:
+            self.poblar_tabla_errores('semantico', resultado['errores_semanticos'])
+        
+        self.poblar_tabla_estadisticas(resultado)
         
         # RESUMEN
         resumen = f"""
@@ -1781,170 +2370,151 @@ Todas las verificaciones léxicas, sintácticas y semánticas
 han pasado correctamente.
 """
         
-        self.texto_resumen.insert('1.0', resumen)
+        if self.texto_resumen:
+            self.texto_resumen.insert('1.0', resumen)
         
-        # TOKENS
-        tokens_info = """
+        # SINTÁCTICO (área de texto para detalles)
+        if self.texto_sintactico:
+            sintactico_detalle = """🔧 ANÁLISIS SINTÁCTICO DETALLADO\n\n"""
+            if resultado['errores_sintacticos']:
+                for i, error in enumerate(resultado['errores_sintacticos'], 1):
+                    sintactico_detalle += f"ERROR #{i}: {error.mensaje}\n"
+                    sintactico_detalle += f"Línea {error.linea}, Columna {error.columna}\n"
+                    if error.sugerencia:
+                        sintactico_detalle += f"Sugerencia: {error.sugerencia}\n"
+                    sintactico_detalle += "\n"
+            else:
+                sintactico_detalle += "✅ Sin errores sintácticos detectados.\n"
+            
+            self.texto_sintactico.insert('1.0', sintactico_detalle)
+        
+        # SEMÁNTICO (área de texto para detalles)
+        if self.texto_semantico:
+            semantico_detalle = """🧠 ANÁLISIS SEMÁNTICO DETALLADO\n\n"""
+            if resultado['errores_semanticos']:
+                for i, error in enumerate(resultado['errores_semanticos'], 1):
+                    semantico_detalle += f"ERROR #{i}: {error.mensaje}\n"
+                    semantico_detalle += f"Línea {error.linea}, Columna {error.columna}\n"
+                    if error.sugerencia:
+                        semantico_detalle += f"Sugerencia: {error.sugerencia}\n"
+                    semantico_detalle += "\n"
+            else:
+                semantico_detalle += "✅ Sin errores semánticos detectados.\n"
+            
+            self.texto_semantico.insert('1.0', semantico_detalle)
+        
+        # REGLAS GRAMATICALES (mantener como texto)
+        if self.texto_reglas:
+            reglas_info = """
 ╔══════════════════════════════════════════════════════════════╗
-║                        ANÁLISIS LÉXICO                       ║
+║                 REGLAS GRAMATICALES DE PYTHON                ║
 ╚══════════════════════════════════════════════════════════════╝
 
+📝 ESTRUCTURA GENERAL DEL LENGUAJE:
+────────────────────────────────────────────────────────────────
+🔹 PROGRAMA: programa ::= (declaracion | sentencia)*
+🔹 DECLARACIONES: def_funcion | def_clase | import_stmt
+🔹 CONDICIONALES: if_stmt | elif_clause | else_clause  
+🔹 BUCLES: for_stmt | while_stmt
+🔹 EXCEPCIONES: try_stmt | except_clause | finally_clause
+🔹 CONTEXTO: with_stmt
+
+📚 TOKENS Y LEXEMAS:
+────────────────────────────────────────────────────────────────
+🔹 IDENTIFICADORES: (letra | '_') (letra | digito | '_')*
+🔹 NÚMEROS: ENTERO | DECIMAL | CIENTIFICO | BINARIO | OCTAL | HEXADECIMAL
+🔹 PALABRAS RESERVADAS: False, None, True, and, as, assert, async, await,
+   break, class, continue, def, del, elif, else, except, finally, for,
+   from, global, if, import, in, is, lambda, nonlocal, not, or, pass,
+   raise, return, try, while, with, yield
+
+✅ REGLAS DE CORRECCIÓN:
+────────────────────────────────────────────────────────────────
+• Toda función debe terminar con ':' seguido de bloque indentado
+• Toda estructura de control requiere ':'
+• Los paréntesis deben estar balanceados
+• Las comillas de strings deben estar cerradas
+• Los identificadores no pueden ser palabras reservadas
+• La indentación debe ser consistente (4 espacios recomendado)
+• Las variables deben estar definidas antes de su uso
+• Las funciones deben estar declaradas antes de ser llamadas
 """
+            if self.texto_reglas:
+                self.texto_reglas.insert('1.0', reglas_info)
         
+        # Seleccionar pestaña de resumen por defecto
+        self.cambiar_pestaña('resumen')
+        
+        # TOKENS - Información básica
+        tokens_info = "📊 RESUMEN DEL ANÁLISIS LÉXICO\\n\\n"
         if resultado['errores_lexicos']:
-            tokens_info += "⚠️ ERRORES LÉXICOS ENCONTRADOS:\\n"
-            tokens_info += "┌─────┬─────────┬──────────┬──────────────────────────────┐\\n"
-            tokens_info += "│ No. │  Línea  │ Columna  │           Descripción        │\\n"
-            tokens_info += "├─────┼─────────┼──────────┼──────────────────────────────┤\\n"
-            for i, error in enumerate(resultado['errores_lexicos'], 1):
-                linea = str(error.linea)
-                columna = str(error.columna)
-                desc = error.mensaje[:28] + "..." if len(error.mensaje) > 28 else error.mensaje
-                tokens_info += f"│ {i:2d}  │  {linea:5s}  │   {columna:5s}  │ {desc:28s} │\\n"
-            tokens_info += "└─────┴─────────┴──────────┴──────────────────────────────┘\\n\\n"
-        
+            tokens_info += f"⚠️ Se encontraron {len(resultado['errores_lexicos'])} errores léxicos\\n"
         if resultado['tokens']:
-            tokens_info += "TOKENS IDENTIFICADOS:\\n"
-            tokens_info += "┌─────┬──────────────────┬─────────────────────────┬──────┐\\n"
-            tokens_info += "│ No. │       Tipo       │          Valor          │Línea │\\n"
-            tokens_info += "├─────┼──────────────────┼─────────────────────────┼──────┤\\n"
-            for i, token in enumerate(resultado['tokens'][:50]):  # Primeros 50
-                tipo = token.tipo.value[:16]
-                valor = str(token.valor)[:23]
-                if len(str(token.valor)) > 23:
-                    valor = str(token.valor)[:20] + "..."
-                linea = str(token.linea)
-                tokens_info += f"│{i+1:4d} │ {tipo:16s} │ {valor:23s} │ {linea:4s} │\\n"
-            tokens_info += "└─────┴──────────────────┴─────────────────────────┴──────┘\\n"
-            
+            tokens_info += f"✅ Se identificaron {len(resultado['tokens'])} tokens válidos\\n"
             if len(resultado['tokens']) > 50:
-                tokens_info += f"\\n📊 Mostrando los primeros 50 de {len(resultado['tokens'])} tokens totales\\n"
+                tokens_info += f"� Mostrando los primeros 50 tokens en la tabla\\n"
         else:
-            tokens_info += "⚠️ No se generaron tokens válidos debido a errores léxicos.\\n"
+            tokens_info += "⚠️ No se generaron tokens válidos debido a errores léxicos\\n"
         
-        self.texto_tokens.insert('1.0', tokens_info)
+        if self.texto_tokens:
+            self.texto_tokens.insert('1.0', tokens_info)
         
-        # SINTÁCTICO
-        sintactico_info = """
-╔══════════════════════════════════════════════════════════════╗
-║                      ANÁLISIS SINTÁCTICO                     ║
-╚══════════════════════════════════════════════════════════════╝
-
-"""
+        # SINTÁCTICO - Información básica
+        
+        # También llenar área de texto con información adicional
+        sintactico_info = f"� RESUMEN DEL ANÁLISIS SINTÁCTICO\\n\\n"
         if resultado['errores_sintacticos']:
-            sintactico_info += "ERRORES ENCONTRADOS:\\n"
-            sintactico_info += "┌─────┬─────────┬──────────┬──────────────────────────────┐\\n"
-            sintactico_info += "│ No. │  Línea  │ Columna  │           Descripción        │\\n"
-            sintactico_info += "├─────┼─────────┼──────────┼──────────────────────────────┤\\n"
-            for i, error in enumerate(resultado['errores_sintacticos'], 1):
-                linea = str(error.linea)
-                columna = str(error.columna)
-                desc = error.mensaje[:28] + "..." if len(error.mensaje) > 28 else error.mensaje
-                sintactico_info += f"│ {i:2d}  │  {linea:5s}  │   {columna:5s}  │ {desc:28s} │\\n"
-            sintactico_info += "└─────┴─────────┴──────────┴──────────────────────────────┘\\n\\n"
-            
-            # Detalles de sugerencias
-            sintactico_info += "💡 SUGERENCIAS:\\n"
-            sintactico_info += "┌─────┬─────────────────────────────────────────────────────┐\\n"
-            sintactico_info += "│ No. │                    Sugerencia                       │\\n"
-            sintactico_info += "├─────┼─────────────────────────────────────────────────────┤\\n"
-            for i, error in enumerate(resultado['errores_sintacticos'], 1):
-                if error.sugerencia:
-                    sug = error.sugerencia[:55] + "..." if len(error.sugerencia) > 55 else error.sugerencia
-                    sintactico_info += f"│ {i:2d}  │ {sug:55s} │\\n"
-                else:
-                    sintactico_info += f"│ {i:2d}  │ {'Sin sugerencia disponible':55s} │\\n"
-            sintactico_info += "└─────┴─────────────────────────────────────────────────────┘\\n"
+            sintactico_info += f"⚠️ Se encontraron {len(resultado['errores_sintacticos'])} errores sintácticos\\n"
+            sintactico_info += f"💡 Consulte la tabla para ver detalles y sugerencias\\n"
         elif resultado['errores_lexicos']:
-            sintactico_info += """⚠️ ANÁLISIS SINTÁCTICO OMITIDO
-────────────────────────────────────────────────────────────────
-
-┌─────────────────────────────────────────────────────────────┐
-│                          MOTIVO                             │
-├─────────────────────────────────────────────────────────────┤
-│ El análisis sintáctico no se pudo completar debido a       │
-│ errores en la fase léxica. Corrija primero los errores     │
-│ léxicos para continuar con el análisis sintáctico.         │
-└─────────────────────────────────────────────────────────────┘
-"""
+            sintactico_info += "⚠️ ANÁLISIS SINTÁCTICO OMITIDO\\n"
+            sintactico_info += "──────────────────────────────\\n\\n"
+            sintactico_info += "El análisis sintáctico no se pudo completar debido a\\n"
+            sintactico_info += "errores en la fase léxica. Corrija primero los errores\\n"
+            sintactico_info += "léxicos para continuar con el análisis sintáctico.\\n"
         else:
-            sintactico_info += """✅ ANÁLISIS SINTÁCTICO EXITOSO
-────────────────────────────────────────────────────────────────
-
-┌─────────────────────────────────────────────────────────────┐
-│                      VERIFICACIONES                        │
-├─────────────────────────────────────────────────────────────┤
-│ ✓ Declaraciones de funciones válidas                       │
-│ ✓ Estructuras de control bien formadas                     │
-│ ✓ Uso correcto de delimitadores                            │
-│ ✓ Indentación apropiada                                    │
-│ ✓ Sintaxis de Python correcta                              │
-└─────────────────────────────────────────────────────────────┘
-"""
+            sintactico_info += "✅ ANÁLISIS SINTÁCTICO EXITOSO\\n"
+            sintactico_info += "─────────────────────────────\\n\\n"
+            sintactico_info += "✓ Declaraciones de funciones válidas\\n"
+            sintactico_info += "✓ Estructuras de control correctas\\n"
+            sintactico_info += "✓ Expresiones bien formadas\\n"
+            sintactico_info += "✓ Bloques correctamente delimitados\\n"
         
-        self.texto_sintactico.insert('1.0', sintactico_info)
+        if self.texto_sintactico:
+            self.texto_sintactico.insert('1.0', sintactico_info)
         
-        # SEMÁNTICO
-        semantico_info = """
-╔══════════════════════════════════════════════════════════════╗
-║                      ANÁLISIS SEMÁNTICO                      ║
-╚══════════════════════════════════════════════════════════════╝
-
-"""
+        # SEMÁNTICO - Información básica
+        
+        # Contenido detallado para el área de texto
+        semantico_info = f"🧠 ANÁLISIS SEMÁNTICO - REPORTE DETALLADO\\n"
+        semantico_info += f"═══════════════════════════════════════\\n\\n"
+        
         if resultado['errores_semanticos']:
-            semantico_info += "ERRORES ENCONTRADOS:\\n"
-            semantico_info += "┌─────┬─────────┬──────────┬──────────────────────────────┐\\n"
-            semantico_info += "│ No. │  Línea  │ Columna  │           Descripción        │\\n"
-            semantico_info += "├─────┼─────────┼──────────┼──────────────────────────────┤\\n"
-            for i, error in enumerate(resultado['errores_semanticos'], 1):
-                linea = str(error.linea)
-                columna = str(error.columna)
-                desc = error.mensaje[:28] + "..." if len(error.mensaje) > 28 else error.mensaje
-                semantico_info += f"│ {i:2d}  │  {linea:5s}  │   {columna:5s}  │ {desc:28s} │\\n"
-            semantico_info += "└─────┴─────────┴──────────┴──────────────────────────────┘\\n\\n"
+            semantico_info += f"⚠️ Se detectaron {len(resultado['errores_semanticos'])} errores semánticos\\n\\n"
+            semantico_info += "📋 ANÁLISIS DETALLADO:\\n"
+            semantico_info += "─────────────────────\\n\\n"
             
-            # Detalles de sugerencias
-            semantico_info += "💡 SUGERENCIAS:\\n"
-            semantico_info += "┌─────┬─────────────────────────────────────────────────────┐\\n"
-            semantico_info += "│ No. │                    Sugerencia                       │\\n"
-            semantico_info += "├─────┼─────────────────────────────────────────────────────┤\\n"
             for i, error in enumerate(resultado['errores_semanticos'], 1):
-                if error.sugerencia:
-                    sug = error.sugerencia[:55] + "..." if len(error.sugerencia) > 55 else error.sugerencia
-                    semantico_info += f"│ {i:2d}  │ {sug:55s} │\\n"
-                else:
-                    semantico_info += f"│ {i:2d}  │ {'Sin sugerencia disponible':55s} │\\n"
-            semantico_info += "└─────┴─────────────────────────────────────────────────────┘\\n"
-        elif resultado['errores_lexicos'] or resultado['errores_sintacticos']:
-            semantico_info += """⚠️ ANÁLISIS SEMÁNTICO OMITIDO
-────────────────────────────────────────────────────────────────
-
-┌─────────────────────────────────────────────────────────────┐
-│                          MOTIVO                             │
-├─────────────────────────────────────────────────────────────┤
-│ El análisis semántico no se pudo completar debido a        │
-│ errores en las fases anteriores. Corrija primero los       │
-│ errores léxicos y sintácticos para continuar.              │
-└─────────────────────────────────────────────────────────────┘
-"""
+                semantico_info += f"❌ Error #{i}:\\n"
+                semantico_info += f"   📍 Ubicación: Línea {error.linea}, Columna {error.columna}\\n"
+                semantico_info += f"   📝 Descripción: {error.mensaje}\\n"
+                if hasattr(error, 'sugerencia') and error.sugerencia:
+                    semantico_info += f"   💡 Sugerencia: {error.sugerencia}\\n"
+                semantico_info += "\\n"
         else:
-            semantico_info += """✅ ANÁLISIS SEMÁNTICO EXITOSO
-────────────────────────────────────────────────────────────────
-
-┌─────────────────────────────────────────────────────────────┐
-│                      VERIFICACIONES                        │
-├─────────────────────────────────────────────────────────────┤
-│ ✓ Todas las variables están definidas antes de su uso      │
-│ ✓ Todas las funciones están declaradas correctamente       │
-│ ✓ No hay referencias a elementos inexistentes              │
-│ ✓ Los tipos de datos son consistentes                      │
-│ ✓ Uso correcto de funciones built-in                       │
-└─────────────────────────────────────────────────────────────┘
-"""
+            semantico_info += "✅ ANÁLISIS SEMÁNTICO EXITOSO\\n"
+            semantico_info += "────────────────────────────\\n\\n"
+            semantico_info += "🎯 VALIDACIONES COMPLETADAS:\\n"
+            semantico_info += "• Variables definidas antes de su uso\\n"
+            semantico_info += "• Funciones declaradas correctamente\\n"
+            semantico_info += "• Tipos de datos consistentes\\n"
+            semantico_info += "• Ámbitos (scopes) respetados\\n"
+            semantico_info += "• Referencias válidas\\n"
         
-        self.texto_semantico.insert('1.0', semantico_info)
+        if self.texto_semantico:
+            self.texto_semantico.insert('1.0', semantico_info)
         
-        # ESTADÍSTICAS
+        # ESTADÍSTICAS - Información básica
         palabras_reservadas = len([t for t in resultado['tokens'] if t.tipo == TipoToken.PALABRA_RESERVADA])
         identificadores = len([t for t in resultado['tokens'] if t.tipo == TipoToken.IDENTIFICADOR])
         numeros = len([t for t in resultado['tokens'] if t.tipo == TipoToken.NUMERO])
@@ -1952,48 +2522,220 @@ han pasado correctamente.
         operadores = len([t for t in resultado['tokens'] if t.tipo == TipoToken.OPERADOR])
         delimitadores = len([t for t in resultado['tokens'] if t.tipo == TipoToken.DELIMITADOR])
         
-        stats_info = f"""
+        stats_info = "📈 MÉTRICAS DEL CÓDIGO\\n"
+        stats_info += "═══════════════════\\n\\n"
+        stats_info += f"📊 Total de tokens: {len(resultado['tokens'])}\\n"
+        stats_info += f"🔹 Palabras reservadas: {palabras_reservadas} ({(palabras_reservadas/max(len(resultado['tokens']),1)*100):.1f}%)\\n"
+        stats_info += f"🔹 Identificadores: {identificadores} ({(identificadores/max(len(resultado['tokens']),1)*100):.1f}%)\\n"
+        stats_info += f"🔹 Números: {numeros} ({(numeros/max(len(resultado['tokens']),1)*100):.1f}%)\\n"
+        stats_info += f"🔹 Strings: {strings} ({(strings/max(len(resultado['tokens']),1)*100):.1f}%)\\n"
+        stats_info += f"🔹 Operadores: {operadores} ({(operadores/max(len(resultado['tokens']),1)*100):.1f}%)\\n"
+        stats_info += f"🔹 Delimitadores: {delimitadores} ({(delimitadores/max(len(resultado['tokens']),1)*100):.1f}%)\\n\\n"
+        
+        stats_info += "📊 ANÁLISIS DE ERRORES\\n"
+        stats_info += "═══════════════════\\n\\n"
+        stats_info += f"🔹 Errores Léxicos: {len(resultado['errores_lexicos'])} {'✅' if len(resultado['errores_lexicos'])==0 else '❌'}\\n"
+        stats_info += f"🔹 Errores Sintácticos: {len(resultado['errores_sintacticos'])} {'✅' if len(resultado['errores_sintacticos'])==0 else '❌'}\\n"
+        stats_info += f"🔹 Errores Semánticos: {len(resultado['errores_semanticos'])} {'✅' if len(resultado['errores_semanticos'])==0 else '❌'}\\n"
+        stats_info += f"🔹 TOTAL: {resultado['total_errores']} errores {'🎉' if resultado['exito'] else '⚠️'}\\n\\n"
+        
+        if resultado['exito']:
+            stats_info += "🎉 ¡COMPILACIÓN EXITOSA!\\n"
+            stats_info += "Su código está listo para ejecutar.\\n"
+        else:
+            stats_info += "⚠️ Corrija los errores para continuar.\\n"
+        
+        if hasattr(self, 'texto_stats') and self.texto_stats:
+            self.texto_stats.insert('1.0', stats_info)
+        
+        # REGLAS GRAMATICALES
+        reglas_info = """
 ╔══════════════════════════════════════════════════════════════╗
-║                        ESTADÍSTICAS                          ║
+║                 REGLAS GRAMATICALES DE PYTHON                ║
 ╚══════════════════════════════════════════════════════════════╝
 
-📈 MÉTRICAS DEL CÓDIGO:
-┌──────────────────────────┬─────────┬────────────────────────┐
-│          Tipo            │  Cant.  │      Porcentaje        │
-├──────────────────────────┼─────────┼────────────────────────┤
-│ Total de tokens          │ {len(resultado['tokens']):6d}  │        100.0%          │
-│ Palabras reservadas      │ {palabras_reservadas:6d}  │ {(palabras_reservadas/max(len(resultado['tokens']),1)*100):20.1f}% │
-│ Identificadores          │ {identificadores:6d}  │ {(identificadores/max(len(resultado['tokens']),1)*100):20.1f}% │
-│ Números                  │ {numeros:6d}  │ {(numeros/max(len(resultado['tokens']),1)*100):20.1f}% │
-│ Strings                  │ {strings:6d}  │ {(strings/max(len(resultado['tokens']),1)*100):20.1f}% │
-│ Operadores               │ {operadores:6d}  │ {(operadores/max(len(resultado['tokens']),1)*100):20.1f}% │
-│ Delimitadores            │ {delimitadores:6d}  │ {(delimitadores/max(len(resultado['tokens']),1)*100):20.1f}% │
-└──────────────────────────┴─────────┴────────────────────────┘
+📝 ESTRUCTURA GENERAL DEL LENGUAJE:
+────────────────────────────────────────────────────────────────
 
-📊 ANÁLISIS DE ERRORES:
-┌──────────────────────────┬─────────┬────────────────────────┐
-│      Fase de Análisis    │ Errores │       Estado           │
-├──────────────────────────┼─────────┼────────────────────────┤
-│ Análisis Léxico          │ {len(resultado['errores_lexicos']):6d}  │ {'✅ Correcto' if len(resultado['errores_lexicos'])==0 else '❌ Con errores':22s} │
-│ Análisis Sintáctico      │ {len(resultado['errores_sintacticos']):6d}  │ {'✅ Correcto' if len(resultado['errores_sintacticos'])==0 else '❌ Con errores':22s} │
-│ Análisis Semántico       │ {len(resultado['errores_semanticos']):6d}  │ {'✅ Correcto' if len(resultado['errores_semanticos'])==0 else '❌ Con errores':22s} │
-├──────────────────────────┼─────────┼────────────────────────┤
-│ TOTAL DE ERRORES         │ {resultado['total_errores']:6d}  │ {'🎉 ÉXITO TOTAL' if resultado['exito'] else '⚠️ REQUIERE CORRECCIÓN':22s} │
-└──────────────────────────┴─────────┴────────────────────────┘
+🔹 PROGRAMA:
+   programa ::= (declaracion | sentencia)*
 
-🎯 CALIDAD DEL CÓDIGO:
-┌─────────────────────────────────────────────────────────────┐
-│                         RESULTADO                           │
-├─────────────────────────────────────────────────────────────┤
-│ {('🏆 EXCELENTE - Su código está perfecto y listo para' if resultado['exito'] else '🔧 NECESITA MEJORAS - Corrija los errores antes de'):59s} │
-│ {'    ejecutar sin problemas. ¡Felicitaciones!' if resultado['exito'] else '    continuar. Revise cada fase de análisis.':59s} │
-└─────────────────────────────────────────────────────────────┘
+🔹 DECLARACIONES:
+   declaracion ::= def_funcion | def_clase | import_stmt
+   
+   def_funcion ::= 'def' IDENTIFICADOR '(' parametros ')' ':' bloque
+   parametros  ::= (IDENTIFICADOR (',' IDENTIFICADOR)*)?
+   
+   def_clase   ::= 'class' IDENTIFICADOR ('(' herencia ')')? ':' bloque
+   herencia    ::= IDENTIFICADOR (',' IDENTIFICADOR)*
+   
+   import_stmt ::= 'import' modulo | 'from' modulo 'import' nombres
+   modulo      ::= IDENTIFICADOR ('.' IDENTIFICADOR)*
+   nombres     ::= IDENTIFICADOR (',' IDENTIFICADOR)*
+
+📐 ESTRUCTURAS DE CONTROL:
+────────────────────────────────────────────────────────────────
+
+🔹 CONDICIONALES:
+   if_stmt   ::= 'if' expresion ':' bloque elif_clause* else_clause?
+   elif_clause ::= 'elif' expresion ':' bloque
+   else_clause ::= 'else' ':' bloque
+
+🔹 BUCLES:
+   for_stmt   ::= 'for' IDENTIFICADOR 'in' expresion ':' bloque
+   while_stmt ::= 'while' expresion ':' bloque
+
+🔹 MANEJO DE EXCEPCIONES:
+   try_stmt     ::= 'try' ':' bloque except_clause+ finally_clause?
+                  | 'try' ':' bloque finally_clause
+   except_clause ::= 'except' (tipo_excepcion ('as' IDENTIFICADOR)?)? ':' bloque
+   finally_clause ::= 'finally' ':' bloque
+
+🔹 CONTEXTO:
+   with_stmt ::= 'with' expresion ('as' IDENTIFICADOR)? ':' bloque
+
+📊 EXPRESIONES Y OPERADORES:
+────────────────────────────────────────────────────────────────
+
+🔹 EXPRESIONES:
+   expresion ::= expr_or
+   expr_or   ::= expr_and ('or' expr_and)*
+   expr_and  ::= expr_not ('and' expr_not)*
+   expr_not  ::= 'not' expr_not | comparacion
+   
+   comparacion ::= expr_aritmetica (comp_op expr_aritmetica)*
+   comp_op     ::= '<' | '>' | '==' | '>=' | '<=' | '!=' | 'in' | 'not' 'in' | 'is' | 'is' 'not'
+
+🔹 OPERADORES ARITMÉTICOS:
+   expr_aritmetica ::= termino (('+' | '-') termino)*
+   termino        ::= factor (('*' | '/' | '//' | '%') factor)*
+   factor         ::= ('+' | '-')? potencia
+   potencia       ::= atom ('**' factor)?
+
+🔹 ÁTOMICOS:
+   atom ::= IDENTIFICADOR | NUMERO | STRING | 'True' | 'False' | 'None'
+          | '(' expresion ')' | lista | diccionario | llamada_funcion
+
+📚 TOKENS Y LEXEMAS:
+────────────────────────────────────────────────────────────────
+
+🔹 IDENTIFICADORES:
+   IDENTIFICADOR ::= (letra | '_') (letra | digito | '_')*
+   letra         ::= [a-zA-Z]
+   digito        ::= [0-9]
+
+🔹 NÚMEROS:
+   NUMERO ::= ENTERO | DECIMAL | CIENTIFICO | BINARIO | OCTAL | HEXADECIMAL
+   
+   ENTERO     ::= digito+
+   DECIMAL    ::= digito+ '.' digito* | '.' digito+
+   CIENTIFICO ::= (ENTERO | DECIMAL) [eE] [+-]? digito+
+   BINARIO    ::= '0' [bB] [01]+
+   OCTAL      ::= '0' [oO] [0-7]+
+   HEXADECIMAL::= '0' [xX] [0-9a-fA-F]+
+
+🔹 CADENAS:
+   STRING ::= STRING_SIMPLE | STRING_TRIPLE
+   STRING_SIMPLE ::= ('"' contenido_simple '"') | ("'" contenido_simple "'")
+   STRING_TRIPLE ::= ('"""' contenido_triple '"""') | ("'''" contenido_triple "'''")
+
+🔹 PALABRAS RESERVADAS:
+   False    None     True     and      as       assert   async    await
+   break    class    continue def      del      elif     else     except
+   finally  for      from     global   if       import   in       is
+   lambda   nonlocal not      or       pass     raise    return   try
+   while    with     yield
+
+🔹 OPERADORES:
+   ARITMÉTICOS: + - * / // % ** @
+   COMPARACIÓN: < > <= >= == != 
+   LÓGICOS:     and or not
+   ASIGNACIÓN:  = += -= *= /= //= %= **= @= &= |= ^= >>= <<=
+   BITWISE:     & | ^ ~ << >>
+   PERTENENCIA: in not_in
+   IDENTIDAD:   is is_not
+
+🔹 DELIMITADORES:
+   AGRUPACIÓN:  ( ) [ ] { }
+   SEPARADORES: , : . ; ->
+   DECORADORES: @
+
+📏 REGLAS DE INDENTACIÓN:
+────────────────────────────────────────────────────────────────
+
+🔹 INDENTACIÓN:
+   • Python usa indentación para delimitar bloques de código
+   • Debe ser consistente (recomendado: 4 espacios)
+   • Un bloque comienza después de ':' con mayor indentación
+   • Un bloque termina cuando la indentación regresa al nivel anterior
+
+🔹 ESTRUCTURA DE BLOQUE:
+   bloque ::= NUEVA_LINEA INDENT sentencia+ DEDENT
+   INDENT ::= aumento_indentacion
+   DEDENT ::= disminucion_indentacion
+
+📋 SENTENCIAS:
+────────────────────────────────────────────────────────────────
+
+🔹 SENTENCIAS SIMPLES:
+   sentencia_simple ::= asignacion | expr_stmt | return_stmt | break_stmt |
+                       continue_stmt | pass_stmt | del_stmt | yield_stmt |
+                       raise_stmt | import_stmt | global_stmt | nonlocal_stmt |
+                       assert_stmt
+   
+   asignacion   ::= target '=' expresion
+   expr_stmt    ::= expresion
+   return_stmt  ::= 'return' expresion?
+   break_stmt   ::= 'break'
+   continue_stmt::= 'continue'
+   pass_stmt    ::= 'pass'
+   del_stmt     ::= 'del' target_list
+   yield_stmt   ::= 'yield' expresion?
+   raise_stmt   ::= 'raise' (expresion ('from' expresion)?)?
+   global_stmt  ::= 'global' IDENTIFICADOR (',' IDENTIFICADOR)*
+   nonlocal_stmt::= 'nonlocal' IDENTIFICADOR (',' IDENTIFICADOR)*
+   assert_stmt  ::= 'assert' expresion (',' expresion)?
+
+🔹 SENTENCIAS COMPUESTAS:
+   sentencia_compuesta ::= if_stmt | while_stmt | for_stmt | try_stmt |
+                          with_stmt | def_funcion | def_clase
+
+🎯 REGLAS DE PRECEDENCIA DE OPERADORES (de mayor a menor):
+────────────────────────────────────────────────────────────────
+
+1. **  (exponenciación) - Asociatividad derecha
+2. +x, -x, ~x (unarios)
+3. *, /, //, %
+4. +, - (binarios)
+5. <<, >>
+6. &
+7. ^
+8. |
+9. ==, !=, <, <=, >, >=, is, is not, in, not in
+10. not
+11. and
+12. or
+13. lambda
+14. if...else (expresión condicional)
+
+✅ REGLAS DE CORRECCIÓN:
+────────────────────────────────────────────────────────────────
+
+• Toda función debe terminar con ':' seguido de bloque indentado
+• Toda estructura de control (if, for, while) requiere ':'
+• Los paréntesis deben estar balanceados
+• Las comillas de strings deben estar cerradas
+• Los identificadores no pueden ser palabras reservadas
+• La indentación debe ser consistente dentro del mismo bloque
+• Las variables deben estar definidas antes de su uso
+• Las funciones deben estar declaradas antes de ser llamadas
 """
         
-        self.texto_stats.insert('1.0', stats_info)
+        if self.texto_reglas:
+            self.texto_reglas.insert('1.0', reglas_info)
         
-        # Seleccionar pestaña de resumen
-        self.notebook.select(0)
+        # Seleccionar pestaña de resumen por defecto
+        self.cambiar_pestaña('resumen')
     
     def limpiar_codigo(self):
         """Limpia el editor"""
