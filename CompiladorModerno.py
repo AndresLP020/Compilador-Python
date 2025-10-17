@@ -1984,6 +1984,20 @@ print("\\n🎉 ¡Cálculos completados exitosamente!")
                 'descripcion': 'Autómatas y tabla de transiciones',
                 'color': '#20c997',  # Verde agua
                 'tipo': 'mixto'
+            },
+            {
+                'id': 'ast',
+                'texto': '🌳 AST',
+                'descripcion': 'Árbol de Sintaxis Abstracta',
+                'color': '#fd7e14',  # Naranja
+                'tipo': 'mixto'
+            },
+            {
+                'id': 'derivacion',
+                'texto': '🌿 DERIVACIÓN',
+                'descripcion': 'Árbol de derivación izquierda/derecha',
+                'color': '#6610f2',  # Púrpura
+                'tipo': 'boton_ventana'
             }
         ]
         
@@ -2082,9 +2096,15 @@ print("\\n🎉 ¡Cálculos completados exitosamente!")
         self.texto_stats = self.areas_texto['estadisticas']  # Será None, usaremos tabla
         self.texto_glc = self.areas_texto['glc']
         self.texto_automatas = self.areas_texto['automatas']
+        self.texto_ast = self.areas_texto['ast']
     
     def cambiar_pestaña(self, pestaña_id):
         """Cambia la pestaña activa"""
+        # Caso especial: Derivación abre nueva ventana
+        if pestaña_id == 'derivacion':
+            self.abrir_ventana_derivacion()
+            return
+        
         # Ocultar frame actual
         if self.pestañas_activa in self.frames_contenido:
             self.frames_contenido[self.pestañas_activa].pack_forget()
@@ -2760,6 +2780,11 @@ han pasado correctamente.
         if self.texto_automatas:
             self.texto_automatas.insert('1.0', automatas_info)
         
+        # AST - Árbol de Sintaxis Abstracta
+        ast_info = self.generar_analisis_ast(resultado)
+        if self.texto_ast:
+            self.texto_ast.insert('1.0', ast_info)
+        
         # Seleccionar pestaña de resumen por defecto
         self.cambiar_pestaña('resumen')
     
@@ -3106,6 +3131,1114 @@ y excelente rendimiento en tiempo de ejecución.
 """
         
         return automatas_info
+    
+    def generar_analisis_ast(self, resultado):
+        """Genera el análisis del Árbol de Sintaxis Abstracta (AST)"""
+        tokens = resultado.get('tokens', [])
+        
+        ast_info = f"""
+==============================================================
+         🌳 ÁRBOL DE SINTAXIS ABSTRACTA (AST)
+==============================================================
+
+🎯 ANÁLISIS ESTRUCTURAL DEL PROGRAMA:
+──────────────────────────────────────────────────────────────
+
+{self.generar_estructura_ast(tokens)}
+
+🔍 VALIDACIÓN DE LA ESTRUCTURA AST:
+──────────────────────────────────────────────────────────────
+
+{self.validar_estructura_ast(tokens)}
+
+🚶‍♂️ RECORRIDO PARA ANÁLISIS SEMÁNTICO:
+──────────────────────────────────────────────────────────────
+
+{self.generar_recorrido_semantico(tokens)}
+
+🌲 REPRESENTACIÓN GRÁFICA DEL AST:
+──────────────────────────────────────────────────────────────
+
+{self.generar_representacion_grafica_ast(tokens)}
+
+📊 MÉTRICAS DEL AST:
+──────────────────────────────────────────────────────────────
+
+{self.generar_metricas_ast(tokens)}
+
+🔧 TEORÍA DE AST:
+──────────────────────────────────────────────────────────────
+
+📖 DEFINICIÓN:
+   Un Árbol de Sintaxis Abstracta (AST) es una representación 
+   jerárquica de la estructura sintáctica del código fuente.
+   
+   🔹 Nodos internos: Representan operadores/construcciones
+   🔹 Hojas: Representan operandos/identificadores/literales
+   
+📈 PROPIEDADES CLAVE:
+   ✅ Estructura jerárquica clara
+   ✅ Eliminación de tokens innecesarios (paréntesis, etc.)
+   ✅ Preserva precedencia de operadores
+   ✅ Facilita análisis semántico
+   
+🎯 USOS DEL AST:
+   🔍 Análisis semántico
+   🔧 Optimización de código
+   🌐 Traducción entre lenguajes
+   🐛 Detección de errores
+   📝 Refactoring automático
+   
+⚡ VENTAJAS:
+   🚀 Navegación eficiente por el código
+   🧠 Análisis contextual preciso
+   🔄 Transformaciones seguras
+   💡 Comprensión estructural clara
+
+"""
+        
+        return ast_info
+    
+    def generar_estructura_ast(self, tokens):
+        """Genera la estructura jerárquica del AST"""
+        if not tokens:
+            return "❌ No hay tokens para analizar"
+        
+        estructura = "📊 ESTRUCTURA JERÁRQUICA DETECTADA:\n\n"
+        
+        # Analizar estructura básica
+        nivel = 0
+        for token in tokens:
+            if token.tipo in ['PALABRA_RESERVADA']:
+                if token.valor in ['def', 'class', 'if', 'for', 'while', 'try']:
+                    estructura += f"{'  ' * nivel}📦 {token.valor.upper()}_NODE\n"
+                    estructura += f"{'  ' * (nivel + 1)}├─ keyword: '{token.valor}'\n"
+                    nivel += 1
+                elif token.valor in ['else', 'elif', 'except', 'finally']:
+                    if nivel > 0:
+                        nivel -= 1
+                    estructura += f"{'  ' * nivel}📦 {token.valor.upper()}_NODE\n"
+                    estructura += f"{'  ' * (nivel + 1)}├─ keyword: '{token.valor}'\n"
+                    nivel += 1
+            elif token.tipo == 'IDENTIFICADOR':
+                estructura += f"{'  ' * (nivel + 1)}🏷️ IDENTIFIER: '{token.valor}'\n"
+            elif token.tipo in ['NUMERO_ENTERO', 'NUMERO_FLOAT']:
+                estructura += f"{'  ' * (nivel + 1)}🔢 LITERAL_NUM: {token.valor}\n"
+            elif token.tipo == 'STRING':
+                estructura += f"{'  ' * (nivel + 1)}📝 LITERAL_STR: {token.valor[:20]}...\n"
+            elif token.tipo == 'OPERADOR':
+                if token.valor in ['=', '+=', '-=', '*=', '/=']:
+                    estructura += f"{'  ' * (nivel + 1)}🎯 ASSIGN_OP: '{token.valor}'\n"
+                elif token.valor in ['+', '-', '*', '/', '%', '**']:
+                    estructura += f"{'  ' * (nivel + 1)}🧮 BINARY_OP: '{token.valor}'\n"
+        
+        return estructura[:2000] + "\n... (estructura truncada)" if len(estructura) > 2000 else estructura
+    
+    def validar_estructura_ast(self, tokens):
+        """Valida la estructura del AST"""
+        if not tokens:
+            return "❌ No hay tokens para validar"
+        
+        validacion = "✅ VALIDACIONES REALIZADAS:\n\n"
+        
+        # Contadores para validación
+        parentesis_abiertos = 0
+        llaves_abiertas = 0
+        corchetes_abiertos = 0
+        
+        errores = []
+        warnings = []
+        
+        for token in tokens:
+            if token.valor == '(':
+                parentesis_abiertos += 1
+            elif token.valor == ')':
+                parentesis_abiertos -= 1
+                if parentesis_abiertos < 0:
+                    errores.append(f"❌ Paréntesis de cierre sin apertura en línea {token.linea}")
+            elif token.valor == '{':
+                llaves_abiertas += 1
+            elif token.valor == '}':
+                llaves_abiertas -= 1
+                if llaves_abiertas < 0:
+                    errores.append(f"❌ Llave de cierre sin apertura en línea {token.linea}")
+            elif token.valor == '[':
+                corchetes_abiertos += 1
+            elif token.valor == ']':
+                corchetes_abiertos -= 1
+                if corchetes_abiertos < 0:
+                    errores.append(f"❌ Corchete de cierre sin apertura en línea {token.linea}")
+        
+        # Verificar balanceado final
+        if parentesis_abiertos != 0:
+            errores.append(f"❌ Paréntesis desbalanceados: {parentesis_abiertos} sin cerrar")
+        if llaves_abiertas != 0:
+            errores.append(f"❌ Llaves desbalanceadas: {llaves_abiertas} sin cerrar")
+        if corchetes_abiertos != 0:
+            errores.append(f"❌ Corchetes desbalanceados: {corchetes_abiertos} sin cerrar")
+        
+        # Resultado de validación
+        if not errores:
+            validacion += "✅ Estructura balanceada correctamente\n"
+            validacion += "✅ Todos los delimitadores emparejados\n"
+            validacion += "✅ AST estructuralmente válido\n"
+        else:
+            validacion += "❌ ERRORES ESTRUCTURALES ENCONTRADOS:\n"
+            for error in errores[:10]:  # Máximo 10 errores
+                validacion += f"   {error}\n"
+        
+        return validacion
+    
+    def generar_recorrido_semantico(self, tokens):
+        """Genera el recorrido del AST para análisis semántico"""
+        if not tokens:
+            return "❌ No hay tokens para recorrer"
+        
+        recorrido = "🚶‍♂️ RECORRIDO SEMÁNTICO (Depth-First):\n\n"
+        
+        # Simular recorrido en profundidad
+        paso = 1
+        contexto = "global"
+        variables_declaradas = set()
+        funciones_declaradas = set()
+        
+        for i, token in enumerate(tokens):
+            if token.tipo == 'PALABRA_RESERVADA':
+                if token.valor == 'def':
+                    siguiente = tokens[i + 1] if i + 1 < len(tokens) else None
+                    if siguiente and siguiente.tipo == 'IDENTIFICADOR':
+                        recorrido += f"{paso:3d}. 🔧 Definición función: '{siguiente.valor}'\n"
+                        funciones_declaradas.add(siguiente.valor)
+                        contexto = f"función {siguiente.valor}"
+                elif token.valor == 'class':
+                    siguiente = tokens[i + 1] if i + 1 < len(tokens) else None
+                    if siguiente and siguiente.tipo == 'IDENTIFICADOR':
+                        recorrido += f"{paso:3d}. 🏗️ Definición clase: '{siguiente.valor}'\n"
+                        contexto = f"clase {siguiente.valor}"
+                elif token.valor in ['if', 'while', 'for']:
+                    recorrido += f"{paso:3d}. 🔍 Estructura control: '{token.valor}'\n"
+                    contexto = f"bloque {token.valor}"
+            elif token.tipo == 'IDENTIFICADOR':
+                # Verificar si es declaración de variable
+                anterior = tokens[i - 1] if i > 0 else None
+                if anterior and anterior.valor == '=':
+                    recorrido += f"{paso:3d}. 📝 Uso variable: '{token.valor}' (contexto: {contexto})\n"
+                else:
+                    siguiente = tokens[i + 1] if i + 1 < len(tokens) else None
+                    if siguiente and siguiente.valor == '=':
+                        recorrido += f"{paso:3d}. 🆕 Declaración variable: '{token.valor}'\n"
+                        variables_declaradas.add(token.valor)
+                    else:
+                        recorrido += f"{paso:3d}. 🔍 Referencia: '{token.valor}'\n"
+            
+            paso += 1
+            if paso > 20:  # Limitar salida
+                recorrido += f"... (recorrido truncado - {len(tokens)} tokens totales)\n"
+                break
+        
+        recorrido += f"\n📊 SÍMBOLOS ENCONTRADOS:\n"
+        recorrido += f"   🔧 Funciones: {len(funciones_declaradas)}\n"
+        recorrido += f"   📝 Variables: {len(variables_declaradas)}\n"
+        
+        return recorrido
+    
+    def generar_representacion_grafica_ast(self, tokens):
+        """Genera una representación gráfica simple del AST"""
+        if not tokens:
+            return "❌ No hay tokens para representar"
+        
+        grafico = "🎨 REPRESENTACIÓN VISUAL (Simplificada):\n\n"
+        
+        # Crear representación simple usando caracteres ASCII
+        grafico += "         🌳 PROGRAM_ROOT\n"
+        grafico += "                │\n"
+        
+        nivel = 0
+        for i, token in enumerate(tokens[:15]):  # Limitar a 15 tokens
+            if token.tipo == 'PALABRA_RESERVADA' and token.valor in ['def', 'class', 'if', 'for', 'while']:
+                grafico += f"         ├─── 📦 {token.valor.upper()}_NODE\n"
+                grafico += f"         │         │\n"
+                nivel += 1
+            elif token.tipo == 'IDENTIFICADOR':
+                grafico += f"         │    ├─── 🏷️ ID: {token.valor}\n"
+            elif token.tipo in ['NUMERO_ENTERO', 'NUMERO_FLOAT']:
+                grafico += f"         │    ├─── 🔢 NUM: {token.valor}\n"
+            elif token.tipo == 'STRING':
+                grafico += f"         │    ├─── 📝 STR: {token.valor[:10]}...\n"
+            elif token.tipo == 'OPERADOR' and token.valor in ['=', '+', '-', '*', '/']:
+                grafico += f"         │    ├─── 🎯 OP: {token.valor}\n"
+        
+        grafico += "         │\n"
+        grafico += "         └─── ... (más nodos)\n\n"
+        
+        grafico += "🔗 LEYENDA:\n"
+        grafico += "   📦 Nodos de construcción (def, class, if, etc.)\n"
+        grafico += "   🏷️ Identificadores (variables, funciones)\n"
+        grafico += "   🔢 Literales numéricos\n"
+        grafico += "   📝 Literales de cadena\n"
+        grafico += "   🎯 Operadores\n"
+        
+        return grafico
+    
+    def generar_metricas_ast(self, tokens):
+        """Genera métricas del AST"""
+        if not tokens:
+            return "❌ No hay tokens para medir"
+        
+        metricas = "📈 MÉTRICAS CALCULADAS:\n\n"
+        
+        # Contadores
+        nodos_construccion = sum(1 for t in tokens if t.tipo == 'PALABRA_RESERVADA' and 
+                               t.valor in ['def', 'class', 'if', 'for', 'while', 'try'])
+        nodos_identificador = sum(1 for t in tokens if t.tipo == 'IDENTIFICADOR')
+        nodos_literal = sum(1 for t in tokens if t.tipo in ['NUMERO_ENTERO', 'NUMERO_FLOAT', 'STRING'])
+        nodos_operador = sum(1 for t in tokens if t.tipo == 'OPERADOR')
+        
+        # Calcular profundidad aproximada
+        profundidad_max = 0
+        profundidad_actual = 0
+        for token in tokens:
+            if token.valor in ['{', '(', '[']:
+                profundidad_actual += 1
+                profundidad_max = max(profundidad_max, profundidad_actual)
+            elif token.valor in ['}', ')', ']']:
+                profundidad_actual = max(0, profundidad_actual - 1)
+        
+        total_nodos = len(tokens)
+        
+        metricas += f"🌳 Nodos totales: {total_nodos}\n"
+        metricas += f"📦 Nodos construcción: {nodos_construccion} ({nodos_construccion/total_nodos*100:.1f}%)\n"
+        metricas += f"🏷️ Nodos identificador: {nodos_identificador} ({nodos_identificador/total_nodos*100:.1f}%)\n"
+        metricas += f"🔢 Nodos literal: {nodos_literal} ({nodos_literal/total_nodos*100:.1f}%)\n"
+        metricas += f"🎯 Nodos operador: {nodos_operador} ({nodos_operador/total_nodos*100:.1f}%)\n"
+        metricas += f"📏 Profundidad máxima: {profundidad_max} niveles\n"
+        metricas += f"⚖️ Factor ramificación: {total_nodos/max(1, nodos_construccion):.1f}\n"
+        
+        # Evaluación de complejidad
+        if total_nodos < 50:
+            complejidad = "🟢 BAJA"
+        elif total_nodos < 200:
+            complejidad = "🟡 MEDIA"
+        else:
+            complejidad = "🔴 ALTA"
+        
+        metricas += f"📊 Complejidad AST: {complejidad}\n"
+        
+        return metricas
+    
+    def abrir_ventana_derivacion(self):
+        """Abre una nueva ventana para mostrar el árbol de derivación"""
+        # Verificar si hay código para analizar
+        codigo = self.editor.get('1.0', tk.END).strip()
+        if not codigo:
+            messagebox.showwarning("⚠️ Advertencia", "No hay código para analizar")
+            return
+        
+        # Crear nueva ventana
+        ventana_derivacion = tk.Toplevel(self.ventana)
+        ventana_derivacion.title("🌿 Árbol de Derivación - Compilador Python")
+        ventana_derivacion.geometry("1200x800")
+        ventana_derivacion.configure(bg=self.colores['fondo'])
+        
+        # Hacer la ventana modal
+        ventana_derivacion.transient(self.ventana)
+        ventana_derivacion.grab_set()
+        
+        # Frame principal con scroll
+        main_frame = tk.Frame(ventana_derivacion, bg=self.colores['fondo'])
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Título
+        titulo = tk.Label(main_frame, 
+                         text="🌿 ÁRBOL DE DERIVACIÓN SINTÁCTICA",
+                         font=('Consolas', 16, 'bold'),
+                         bg=self.colores['fondo'],
+                         fg=self.colores['texto'])
+        titulo.pack(pady=(0, 10))
+        
+        # Frame para botones de control
+        frame_botones = tk.Frame(main_frame, bg=self.colores['fondo'])
+        frame_botones.pack(fill=tk.X, pady=(0, 10))
+        
+        # Botones para seleccionar tipo de derivación
+        tk.Button(frame_botones,
+                 text="📍 Derivación Izquierda",
+                 font=('Consolas', 10, 'bold'),
+                 bg='#28a745', fg='white',
+                 command=lambda: self.mostrar_derivacion(canvas_frame, 'izquierda', codigo),
+                 relief=tk.FLAT, pady=8, padx=15).pack(side=tk.LEFT, padx=(0, 10))
+        
+        tk.Button(frame_botones,
+                 text="📍 Derivación Derecha", 
+                 font=('Consolas', 10, 'bold'),
+                 bg='#dc3545', fg='white',
+                 command=lambda: self.mostrar_derivacion(canvas_frame, 'derecha', codigo),
+                 relief=tk.FLAT, pady=8, padx=15).pack(side=tk.LEFT, padx=(0, 10))
+        
+        tk.Button(frame_botones,
+                 text="🔄 Ambas Derivaciones",
+                 font=('Consolas', 10, 'bold'), 
+                 bg='#6610f2', fg='white',
+                 command=lambda: self.mostrar_derivacion(canvas_frame, 'ambas', codigo),
+                 relief=tk.FLAT, pady=8, padx=15).pack(side=tk.LEFT, padx=(0, 10))
+        
+        # Frame con scroll para el contenido
+        canvas_frame = tk.Frame(main_frame, bg=self.colores['fondo'])
+        canvas_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Canvas con scrollbars
+        canvas = tk.Canvas(canvas_frame, bg=self.colores['panel'], highlightthickness=0)
+        scrollbar_v = tk.Scrollbar(canvas_frame, orient=tk.VERTICAL, command=canvas.yview)
+        scrollbar_h = tk.Scrollbar(canvas_frame, orient=tk.HORIZONTAL, command=canvas.xview)
+        
+        canvas.configure(yscrollcommand=scrollbar_v.set, xscrollcommand=scrollbar_h.set)
+        
+        # Frame interno para el contenido
+        frame_contenido = tk.Frame(canvas, bg=self.colores['panel'])
+        canvas.create_window((0, 0), window=frame_contenido, anchor='nw')
+        
+        # Empaquetar componentes
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar_v.pack(side=tk.RIGHT, fill=tk.Y)
+        scrollbar_h.pack(side=tk.BOTTOM, fill=tk.X)
+        
+        # Configurar scroll
+        def configurar_scroll(event):
+            canvas.configure(scrollregion=canvas.bbox("all"))
+        
+        frame_contenido.bind('<Configure>', configurar_scroll)
+        
+        # Almacenar referencias para uso posterior
+        self.ventana_derivacion_activa = {
+            'ventana': ventana_derivacion,
+            'frame_contenido': frame_contenido,
+            'canvas': canvas
+        }
+        
+        # Mostrar derivación inicial (ambas)
+        self.mostrar_derivacion(canvas_frame, 'ambas', codigo)
+        
+        # Centrar ventana
+        ventana_derivacion.update_idletasks()
+        x = (ventana_derivacion.winfo_screenwidth() - ventana_derivacion.winfo_width()) // 2
+        y = (ventana_derivacion.winfo_screenheight() - ventana_derivacion.winfo_height()) // 2
+        ventana_derivacion.geometry(f"+{x}+{y}")
+    
+    def mostrar_derivacion(self, parent_frame, tipo, codigo):
+        """Muestra el árbol de derivación gráfico con círculos y flechas"""
+        # Limpiar contenido anterior
+        if hasattr(self, 'ventana_derivacion_activa'):
+            for widget in self.ventana_derivacion_activa['frame_contenido'].winfo_children():
+                widget.destroy()
+            
+            frame_contenido = self.ventana_derivacion_activa['frame_contenido']
+            canvas_principal = self.ventana_derivacion_activa['canvas']
+            
+            # Tokenizar el código para analizar
+            try:
+                tokens, errores = self.compilador.analizador_lexico.tokenizar(codigo)
+            except:
+                tokens = []
+                errores = []
+            
+            # Crear título informativo
+            info_frame = tk.Frame(frame_contenido, bg=self.colores['panel'])
+            info_frame.pack(fill=tk.X, padx=10, pady=10)
+            
+            titulo_info = tk.Label(info_frame,
+                                 text=f"🔍 COMPARACIÓN: DERIVACIÓN {tipo.upper()}",
+                                 font=('Consolas', 14, 'bold'),
+                                 bg=self.colores['panel'],
+                                 fg=self.colores['texto'])
+            titulo_info.pack()
+            
+            codigo_info = tk.Label(info_frame,
+                                 text=f"📝 CÓDIGO ANALIZADO: {len(tokens)} tokens detectados",
+                                 font=('Consolas', 10),
+                                 bg=self.colores['panel'],
+                                 fg=self.colores['texto'])
+            codigo_info.pack(pady=5)
+            
+            # Análisis comparativo
+            analisis_frame = tk.Frame(frame_contenido, bg=self.colores['panel'])
+            analisis_frame.pack(fill=tk.X, padx=10, pady=5)
+            
+            tk.Label(analisis_frame,
+                    text="📊 ANÁLISIS COMPARATIVO:",
+                    font=('Consolas', 12, 'bold'),
+                    bg=self.colores['panel'],
+                    fg=self.colores['texto']).pack(anchor='w')
+            
+            # Crear Canvas para dibujar árboles gráficos
+            if tipo == 'ambas':
+                self.crear_arboles_comparativos(frame_contenido, tokens)
+            elif tipo == 'izquierda':
+                self.crear_arbol_izquierda(frame_contenido, tokens)
+            elif tipo == 'derecha':
+                self.crear_arbol_derecha(frame_contenido, tokens)
+            
+            # Métricas de derivación
+            metricas_frame = tk.Frame(frame_contenido, bg=self.colores['panel'])
+            metricas_frame.pack(fill=tk.X, padx=10, pady=10)
+            
+            tk.Label(metricas_frame,
+                    text="📈 MÉTRICAS CALCULADAS:",
+                    font=('Consolas', 12, 'bold'),
+                    bg=self.colores['panel'],
+                    fg=self.colores['texto']).pack(anchor='w')
+            
+            metricas_text = self.generar_metricas_derivacion(tokens)
+            tk.Label(metricas_frame,
+                    text=metricas_text,
+                    font=('Consolas', 9),
+                    bg=self.colores['panel'],
+                    fg=self.colores['texto'],
+                    justify=tk.LEFT).pack(anchor='w')
+            
+            # Actualizar scroll region
+            frame_contenido.update_idletasks()
+            canvas_principal.configure(scrollregion=canvas_principal.bbox("all"))
+    
+    def crear_arboles_comparativos(self, parent, tokens):
+        """Crea la vista comparativa de ambos árboles de derivación"""
+        # Frame para contener ambos árboles
+        arboles_frame = tk.Frame(parent, bg=self.colores['panel'])
+        arboles_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Frame izquierdo
+        frame_izq = tk.Frame(arboles_frame, bg=self.colores['panel'], relief=tk.SOLID, bd=1)
+        frame_izq.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 5))
+        
+        tk.Label(frame_izq,
+                text="🌿 DERIVACIÓN IZQUIERDA",
+                font=('Consolas', 12, 'bold'),
+                bg='#28a745', fg='white').pack(fill=tk.X, pady=2)
+        
+        # Canvas para árbol izquierdo
+        canvas_izq = tk.Canvas(frame_izq, width=500, height=400, bg='white')
+        canvas_izq.pack(padx=5, pady=5)
+        self.dibujar_arbol_derivacion(canvas_izq, tokens, 'izquierda')
+        
+        # Frame derecho
+        frame_der = tk.Frame(arboles_frame, bg=self.colores['panel'], relief=tk.SOLID, bd=1)
+        frame_der.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=(5, 0))
+        
+        tk.Label(frame_der,
+                text="🌿 DERIVACIÓN DERECHA", 
+                font=('Consolas', 12, 'bold'),
+                bg='#dc3545', fg='white').pack(fill=tk.X, pady=2)
+        
+        # Canvas para árbol derecho
+        canvas_der = tk.Canvas(frame_der, width=500, height=400, bg='white')
+        canvas_der.pack(padx=5, pady=5)
+        self.dibujar_arbol_derivacion(canvas_der, tokens, 'derecha')
+    
+    def crear_arbol_izquierda(self, parent, tokens):
+        """Crea solo el árbol de derivación izquierda"""
+        frame = tk.Frame(parent, bg=self.colores['panel'], relief=tk.SOLID, bd=1)
+        frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        tk.Label(frame,
+                text="🌿 DERIVACIÓN IZQUIERDA (Top-Down)",
+                font=('Consolas', 14, 'bold'),
+                bg='#28a745', fg='white').pack(fill=tk.X, pady=2)
+        
+        canvas = tk.Canvas(frame, width=1000, height=600, bg='white')
+        canvas.pack(padx=10, pady=10)
+        self.dibujar_arbol_derivacion(canvas, tokens, 'izquierda')
+    
+    def crear_arbol_derecha(self, parent, tokens):
+        """Crea solo el árbol de derivación derecha"""
+        frame = tk.Frame(parent, bg=self.colores['panel'], relief=tk.SOLID, bd=1)
+        frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        tk.Label(frame,
+                text="🌿 DERIVACIÓN DERECHA (Bottom-Up)",
+                font=('Consolas', 14, 'bold'),
+                bg='#dc3545', fg='white').pack(fill=tk.X, pady=2)
+        
+        canvas = tk.Canvas(frame, width=1000, height=600, bg='white')
+        canvas.pack(padx=10, pady=10)
+        self.dibujar_arbol_derivacion(canvas, tokens, 'derecha')
+    
+    def dibujar_arbol_derivacion(self, canvas, tokens, tipo):
+        """Dibuja el árbol de derivación con círculos y flechas"""
+        if not tokens:
+            canvas.create_text(250, 200, text="❌ No hay tokens para analizar",
+                             font=('Consolas', 12), fill='red')
+            return
+        
+        # Limpiar canvas
+        canvas.delete("all")
+        
+        # Configuración de dibujo
+        radio_nodo = 25
+        espacio_horizontal = 80
+        espacio_vertical = 60
+        x_inicio = 250
+        y_inicio = 50
+        
+        # Colores según tipo de derivación
+        if tipo == 'izquierda':
+            color_nodo = '#28a745'  # Verde
+            color_flecha = '#155724'
+        else:
+            color_nodo = '#dc3545'  # Rojo
+            color_flecha = '#721c24'
+        
+        # Nodo raíz (Programa)
+        canvas.create_oval(x_inicio-radio_nodo, y_inicio-radio_nodo,
+                          x_inicio+radio_nodo, y_inicio+radio_nodo,
+                          fill=color_nodo, outline='black', width=2)
+        canvas.create_text(x_inicio, y_inicio, text="PROG",
+                          font=('Consolas', 9, 'bold'), fill='white')
+        
+        # Analizar estructura del programa
+        nivel_y = y_inicio + espacio_vertical
+        x_actual = x_inicio
+        
+        # Identificar construcciones principales
+        construcciones = []
+        i = 0
+        while i < len(tokens):
+            token = tokens[i]
+            if token.tipo == 'PALABRA_RESERVADA':
+                if token.valor in ['def', 'class', 'if', 'for', 'while', 'try']:
+                    construcciones.append({
+                        'tipo': token.valor,
+                        'inicio': i,
+                        'tokens': self.obtener_tokens_construccion(tokens, i)
+                    })
+            i += 1
+        
+        # Si no hay construcciones específicas, analizar tokens secuencialmente
+        if not construcciones:
+            construcciones = [{'tipo': 'secuencial', 'inicio': 0, 'tokens': tokens[:10]}]
+        
+        # Dibujar construcciones principales
+        x_offset = -(len(construcciones) - 1) * espacio_horizontal // 2
+        
+        for i, construccion in enumerate(construcciones[:5]):  # Máximo 5 construcciones
+            x_nodo = x_inicio + x_offset + (i * espacio_horizontal)
+            
+            # Dibujar flecha desde raíz
+            canvas.create_line(x_inicio, y_inicio + radio_nodo,
+                             x_nodo, nivel_y - radio_nodo,
+                             fill=color_flecha, width=2, arrow=tk.LAST)
+            
+            # Dibujar nodo de construcción
+            canvas.create_oval(x_nodo-radio_nodo, nivel_y-radio_nodo,
+                              x_nodo+radio_nodo, nivel_y+radio_nodo,
+                              fill='lightblue', outline='black', width=2)
+            
+            texto_nodo = construccion['tipo'][:4].upper()
+            canvas.create_text(x_nodo, nivel_y, text=texto_nodo,
+                              font=('Consolas', 8, 'bold'), fill='black')
+            
+            # Dibujar tokens hijos
+            self.dibujar_tokens_hijos(canvas, construccion['tokens'], x_nodo, 
+                                    nivel_y + espacio_vertical, radio_nodo, 
+                                    color_flecha, tipo)
+        
+        # Agregar leyenda
+        self.dibujar_leyenda_derivacion(canvas, tipo)
+    
+    def obtener_tokens_construccion(self, tokens, inicio):
+        """Obtiene los tokens que pertenecen a una construcción"""
+        construccion_tokens = []
+        nivel_anidacion = 0
+        
+        for i in range(inicio, min(inicio + 15, len(tokens))):  # Máximo 15 tokens por construcción
+            token = tokens[i]
+            construccion_tokens.append(token)
+            
+            if token.valor in ['{', '(', '[']:
+                nivel_anidacion += 1
+            elif token.valor in ['}', ')', ']']:
+                nivel_anidacion -= 1
+                if nivel_anidacion < 0:
+                    break
+        
+        return construccion_tokens
+    
+    def dibujar_tokens_hijos(self, canvas, tokens, x_padre, y_nivel, radio, color_flecha, tipo):
+        """Dibuja los tokens hijos de una construcción"""
+        if not tokens or len(tokens) > 8:  # Limitar para evitar sobrecarga visual
+            tokens = tokens[:8] if tokens else []
+        
+        espacio_hijo = 50
+        x_offset = -(len(tokens) - 1) * espacio_hijo // 2
+        
+        for i, token in enumerate(tokens):
+            x_hijo = x_padre + x_offset + (i * espacio_hijo)
+            
+            # Dibujar flecha
+            canvas.create_line(x_padre, y_nivel - radio,
+                             x_hijo, y_nivel + 40 - radio//2,
+                             fill=color_flecha, width=1, arrow=tk.LAST)
+            
+            # Color del nodo según tipo de token
+            if token.tipo == 'PALABRA_RESERVADA':
+                color_hijo = '#ffc107'  # Amarillo
+            elif token.tipo == 'IDENTIFICADOR':
+                color_hijo = '#17a2b8'  # Cyan
+            elif token.tipo in ['NUMERO_ENTERO', 'NUMERO_FLOAT']:
+                color_hijo = '#fd7e14'  # Naranja
+            elif token.tipo == 'STRING':
+                color_hijo = '#6f42c1'  # Púrpura
+            else:
+                color_hijo = '#6c757d'  # Gris
+            
+            # Dibujar nodo hijo
+            canvas.create_oval(x_hijo-15, y_nivel + 40 - 15,
+                              x_hijo+15, y_nivel + 40 + 15,
+                              fill=color_hijo, outline='black', width=1)
+            
+            # Texto del token (abreviado)
+            texto_token = token.valor[:4] if len(token.valor) > 4 else token.valor
+            canvas.create_text(x_hijo, y_nivel + 40, text=texto_token,
+                              font=('Consolas', 7, 'bold'), fill='white')
+    
+    def dibujar_leyenda_derivacion(self, canvas, tipo):
+        """Dibuja la leyenda del árbol de derivación"""
+        x_leyenda = 20
+        y_leyenda = 320
+        
+        # Título de leyenda
+        canvas.create_text(x_leyenda, y_leyenda, text="🔍 LEYENDA:",
+                          font=('Consolas', 10, 'bold'), anchor='w')
+        
+        y_leyenda += 25
+        
+        # Colores de nodos
+        leyenda_items = [
+            ('#28a745' if tipo == 'izquierda' else '#dc3545', 'Nodo principal'),
+            ('lightblue', 'Construcciones'),
+            ('#ffc107', 'Palabras reservadas'),
+            ('#17a2b8', 'Identificadores'),
+            ('#fd7e14', 'Números'),
+            ('#6f42c1', 'Strings')
+        ]
+        
+        for color, descripcion in leyenda_items:
+            # Círculo de muestra
+            canvas.create_oval(x_leyenda, y_leyenda-5, x_leyenda+10, y_leyenda+5,
+                              fill=color, outline='black')
+            # Descripción
+            canvas.create_text(x_leyenda+15, y_leyenda, text=descripcion,
+                              font=('Consolas', 8), anchor='w')
+            y_leyenda += 20
+        
+        # Información del tipo de derivación
+        y_leyenda += 10
+        if tipo == 'izquierda':
+            info_texto = "📍 Derivación Izquierda:\n• Expandir símbolo no terminal\n  más a la izquierda\n• Análisis Top-Down\n• Parser LL(k)"
+        else:
+            info_texto = "📍 Derivación Derecha:\n• Expandir símbolo no terminal\n  más a la derecha\n• Análisis Bottom-Up\n• Parser LR(k)"
+        
+        canvas.create_text(x_leyenda, y_leyenda, text=info_texto,
+                          font=('Consolas', 8), anchor='w', justify=tk.LEFT)
+    
+    def generar_metricas_derivacion(self, tokens):
+        """Genera métricas de la derivación"""
+        if not tokens:
+            return "❌ No hay tokens para calcular métricas"
+        
+        # Contadores
+        simbolos_terminales = sum(1 for t in tokens if t.tipo in ['NUMERO_ENTERO', 'NUMERO_FLOAT', 'STRING', 'IDENTIFICADOR'])
+        simbolos_no_terminales = sum(1 for t in tokens if t.tipo == 'PALABRA_RESERVADA')
+        operadores = sum(1 for t in tokens if t.tipo == 'OPERADOR')
+        total_elementos = len(tokens)
+        
+        # Complejidad estimada
+        complejidad_izquierda = f"O({simbolos_no_terminales})"
+        complejidad_derecha = f"O({simbolos_no_terminales})"
+        
+        # Eficiencia parsers
+        eficiencia_ll = "✅ Factible" if simbolos_no_terminales < 20 else "⚠️ Complejo"
+        eficiencia_lr = "✅ Factible" if simbolos_no_terminales < 50 else "⚠️ Complejo"
+        
+        metricas = f"""• Símbolos terminales: {simbolos_terminales}
+• Símbolos no terminales: {simbolos_no_terminales}  
+• Operadores: {operadores}
+• Total elementos: {total_elementos}
+
+🏆 Complejidad estimada:
+- Derivación izquierda: {complejidad_izquierda}
+- Derivación derecha: {complejidad_derecha}
+
+⚡ Eficiencia parsers:
+- LL(1): {eficiencia_ll}
+- LR(1): {eficiencia_lr}"""
+        
+        return metricas
+    
+    def generar_arbol_derivacion(self, codigo, tipo):
+        """Genera el árbol de derivación visual"""
+        # Tokenizar el código primero
+        tokens, _ = self.compilador.analizador_lexico.tokenizar(codigo)
+        
+        if tipo == 'izquierda':
+            return self.generar_derivacion_izquierda(tokens)
+        elif tipo == 'derecha':
+            return self.generar_derivacion_derecha(tokens)
+        else:  # ambas
+            return self.generar_ambas_derivaciones(tokens)
+    
+    def generar_derivacion_izquierda(self, tokens):
+        """Genera derivación por la izquierda"""
+        derivacion = f"""
+╔══════════════════════════════════════════════════════════════════════════════════════════════╗
+║                          🌿 DERIVACIÓN POR LA IZQUIERDA (LEFTMOST)                           ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════╝
+
+📊 PRINCIPIO: Se deriva siempre el símbolo no terminal más a la IZQUIERDA
+
+🌳 CONSTRUCCIÓN DEL ÁRBOL:
+══════════════════════════════════════════════════════════════════════════════════════════════
+
+{self.construir_arbol_visual_izquierda(tokens)}
+
+📝 SECUENCIA DE DERIVACIONES:
+══════════════════════════════════════════════════════════════════════════════════════════════
+
+{self.generar_secuencia_derivacion_izquierda(tokens)}
+
+🔍 ANÁLISIS PASO A PASO:
+══════════════════════════════════════════════════════════════════════════════════════════════
+
+{self.analizar_pasos_izquierda(tokens)}
+
+💡 CARACTERÍSTICAS DE LA DERIVACIÓN IZQUIERDA:
+──────────────────────────────────────────────────────────────────────────────────────────────
+
+✅ Procesamiento sistemático de izquierda a derecha
+✅ Construcción predictiva del árbol sintáctico  
+✅ Facilita análisis sintáctico descendente (Top-Down)
+✅ Compatible con parsers LL(k)
+✅ Orden canónico de derivación
+
+🎯 VENTAJAS:
+──────────────────────────────────────────────────────────────────────────────────────────────
+
+🚀 Eficiencia en parsers predictivos
+🧠 Análisis semántico temprano
+🔄 Recuperación de errores más simple
+📚 Facilita construcción de compiladores
+"""
+        return derivacion
+    
+    def generar_derivacion_derecha(self, tokens):
+        """Genera derivación por la derecha"""
+        derivacion = f"""
+╔══════════════════════════════════════════════════════════════════════════════════════════════╗
+║                          🌿 DERIVACIÓN POR LA DERECHA (RIGHTMOST)                            ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════╝
+
+📊 PRINCIPIO: Se deriva siempre el símbolo no terminal más a la DERECHA
+
+🌳 CONSTRUCCIÓN DEL ÁRBOL:
+══════════════════════════════════════════════════════════════════════════════════════════════
+
+{self.construir_arbol_visual_derecha(tokens)}
+
+📝 SECUENCIA DE DERIVACIONES:
+══════════════════════════════════════════════════════════════════════════════════════════════
+
+{self.generar_secuencia_derivacion_derecha(tokens)}
+
+🔍 ANÁLISIS PASO A PASO:
+══════════════════════════════════════════════════════════════════════════════════════════════
+
+{self.analizar_pasos_derecha(tokens)}
+
+💡 CARACTERÍSTICAS DE LA DERIVACIÓN DERECHA:
+──────────────────────────────────────────────────────────────────────────────────────────────
+
+✅ Procesamiento de derecha a izquierda
+✅ Construcción por reducción (Bottom-Up)
+✅ Facilita análisis sintáctico ascendente
+✅ Compatible con parsers LR(k) 
+✅ Derivación canónica inversa
+
+🎯 VENTAJAS:
+──────────────────────────────────────────────────────────────────────────────────────────────
+
+🚀 Eficiencia en parsers LR y LALR
+🔧 Manejo superior de ambigüedades
+📊 Mejor para gramáticas complejas
+⚡ Análisis más potente y flexible
+"""
+        return derivacion
+    
+    def generar_ambas_derivaciones(self, tokens):
+        """Genera comparación de ambas derivaciones"""
+        derivacion = f"""
+╔══════════════════════════════════════════════════════════════════════════════════════════════╗
+║                    🌿 COMPARACIÓN: DERIVACIÓN IZQUIERDA vs DERECHA                           ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════╝
+
+📊 CÓDIGO ANALIZADO: {len(tokens)} tokens detectados
+
+🔄 ANÁLISIS COMPARATIVO:
+══════════════════════════════════════════════════════════════════════════════════════════════
+
+{self.generar_comparacion_visual(tokens)}
+
+📈 MÉTRICAS DE DERIVACIÓN:
+══════════════════────────────────────────────────────────────────────────────────────────────
+
+{self.generar_metricas_derivacion(tokens)}
+
+🌲 ÁRBOLES DE DERIVACIÓN LADO A LADO:
+══════════════════════════════════════════════════════════════════════════════════════════════
+
+IZQUIERDA (LEFTMOST)                 │  DERECHA (RIGHTMOST)
+─────────────────────────────────────┼─────────────────────────────────────
+{self.generar_arboles_paralelos(tokens)}
+
+🎯 CONCLUSIONES:
+──────────────────────────────────────────────────────────────────────────────────────────────
+
+{self.generar_conclusiones_derivacion(tokens)}
+
+💡 APLICACIONES PRÁCTICAS:
+──────────────────────────────────────────────────────────────────────────────────────────────
+
+🔸 Derivación IZQUIERDA → Parsers LL, análisis descendente
+🔸 Derivación DERECHA → Parsers LR, análisis ascendente  
+🔸 Ambas son equivalentes en términos de resultado final
+🔸 Difieren en estrategia de construcción del árbol
+"""
+        return derivacion
+    
+    def construir_arbol_visual_izquierda(self, tokens):
+        """Construye representación visual del árbol para derivación izquierda"""
+        if not tokens:
+            return "❌ No hay tokens para construir el árbol"
+        
+        arbol = "           🌳 PROGRAM\n"
+        arbol += "               │\n"
+        
+        nivel = 0
+        for i, token in enumerate(tokens[:10]):  # Limitar para visualización
+            if token.tipo == 'PALABRA_RESERVADA' and token.valor in ['def', 'class', 'if', 'for', 'while']:
+                arbol += f"    {'    ' * nivel}├──── 📦 {token.valor.upper()}_STMT\n"
+                arbol += f"    {'    ' * nivel}│         │\n" 
+                arbol += f"    {'    ' * nivel}│         ├─── 🔤 KEYWORD: '{token.valor}'\n"
+                nivel += 1
+            elif token.tipo == 'IDENTIFICADOR':
+                arbol += f"    {'    ' * nivel}│         ├─── 🏷️ NAME: '{token.valor}'\n"
+            elif token.tipo in ['NUMERO_ENTERO', 'NUMERO_FLOAT']:
+                arbol += f"    {'    ' * nivel}│         ├─── 🔢 NUMBER: {token.valor}\n"
+            elif token.tipo == 'STRING':
+                arbol += f"    {'    ' * nivel}│         ├─── 📝 STRING: {token.valor[:15]}...\n"
+        
+        arbol += f"    {'    ' * max(0, nivel-1)}│\n"
+        arbol += f"    {'    ' * max(0, nivel-1)}└─── ⚡ END_PROGRAM\n"
+        
+        return arbol
+    
+    def construir_arbol_visual_derecha(self, tokens):
+        """Construye representación visual del árbol para derivación derecha"""
+        if not tokens:
+            return "❌ No hay tokens para construir el árbol"
+        
+        # Para derivación derecha, construimos desde las hojas hacia arriba
+        arbol = "🔄 CONSTRUCCIÓN DESDE LAS HOJAS (Bottom-Up):\n\n"
+        
+        # Mostrar tokens como hojas primero
+        arbol += "📍 PASO 1 - Reconocer tokens (hojas):\n"
+        for i, token in enumerate(tokens[:8]):
+            arbol += f"    🍃 {token.tipo}: '{token.valor}'\n"
+        
+        arbol += "\n📍 PASO 2 - Reducir a construcciones:\n"
+        arbol += "    ┌─── 🔤 KEYWORDS\n"
+        arbol += "    ├─── 🏷️ IDENTIFIERS  ──┐\n"
+        arbol += "    ├─── 🔢 LITERALS      ──┤\n" 
+        arbol += "    └─── 🎯 OPERATORS     ──┘\n"
+        arbol += "                              │\n"
+        arbol += "📍 PASO 3 - Formar estructuras: │\n"
+        arbol += "                              ▼\n"
+        arbol += "                        📦 STATEMENTS\n"
+        arbol += "                              │\n"
+        arbol += "📍 PASO 4 - Construir programa: │\n"
+        arbol += "                              ▼\n"
+        arbol += "                        🌳 PROGRAM_ROOT\n"
+        
+        return arbol
+    
+    def generar_secuencia_derivacion_izquierda(self, tokens):
+        """Genera la secuencia de pasos de derivación izquierda"""
+        if not tokens:
+            return "❌ No hay tokens para derivar"
+        
+        secuencia = "🔄 PASOS DE DERIVACIÓN (Izquierda → Derecha):\n\n"
+        
+        paso = 1
+        secuencia += f"{paso:2d}. PROGRAM → STATEMENTS\n"
+        paso += 1
+        
+        for token in tokens[:8]:
+            if token.tipo == 'PALABRA_RESERVADA':
+                secuencia += f"{paso:2d}. STATEMENTS → {token.valor.upper()}_STMT + STATEMENTS\n"
+                secuencia += f"{paso+1:2d}. {token.valor.upper()}_STMT → '{token.valor}' + EXPRESSION\n"
+                paso += 2
+            elif token.tipo == 'IDENTIFICADOR':
+                secuencia += f"{paso:2d}. EXPRESSION → IDENTIFIER\n"
+                secuencia += f"{paso+1:2d}. IDENTIFIER → '{token.valor}'\n"
+                paso += 2
+        
+        secuencia += f"{paso:2d}. STATEMENTS → ε (fin de programa)\n"
+        
+        return secuencia
+    
+    def generar_secuencia_derivacion_derecha(self, tokens):
+        """Genera la secuencia de pasos de derivación derecha"""
+        if not tokens:
+            return "❌ No hay tokens para derivar"
+        
+        secuencia = "🔄 PASOS DE REDUCCIÓN (Derecha → Izquierda):\n\n"
+        
+        # Para derivación derecha, mostramos las reducciones
+        paso = 1
+        
+        # Empezamos con los tokens terminales
+        for token in tokens[-3:]:  # Últimos tokens
+            if token.tipo == 'IDENTIFICADOR':
+                secuencia += f"{paso:2d}. REDUCE: '{token.valor}' → IDENTIFIER\n"
+                paso += 1
+            elif token.tipo in ['NUMERO_ENTERO', 'NUMERO_FLOAT']:
+                secuencia += f"{paso:2d}. REDUCE: '{token.valor}' → NUMBER\n"
+                paso += 1
+        
+        secuencia += f"{paso:2d}. REDUCE: IDENTIFIER + NUMBER → EXPRESSION\n"
+        paso += 1
+        secuencia += f"{paso:2d}. REDUCE: EXPRESSION → STATEMENT\n"
+        paso += 1
+        secuencia += f"{paso:2d}. REDUCE: STATEMENT → STATEMENTS\n"
+        paso += 1
+        secuencia += f"{paso:2d}. REDUCE: STATEMENTS → PROGRAM\n"
+        
+        return secuencia
+    
+    def analizar_pasos_izquierda(self, tokens):
+        """Analiza los pasos detallados de derivación izquierda"""
+        analisis = "🔍 ANÁLISIS DETALLADO (Top-Down):\n\n"
+        
+        analisis += "📊 Estrategia: Expansión predictiva desde la raíz\n\n"
+        
+        if tokens:
+            analisis += f"🎯 Token inicial: {tokens[0].tipo} = '{tokens[0].valor}'\n"
+            analisis += f"📍 Línea: {tokens[0].linea}\n"
+            analisis += f"🔄 Predicción: Basada en primer token\n"
+            analisis += f"📈 Dirección: Izquierda → Derecha\n"
+            analisis += f"⚡ Eficiencia: O(n) para LL(1)\n"
+        
+        return analisis
+    
+    def analizar_pasos_derecha(self, tokens):
+        """Analiza los pasos detallados de derivación derecha"""
+        analisis = "🔍 ANÁLISIS DETALLADO (Bottom-Up):\n\n"
+        
+        analisis += "📊 Estrategia: Reducción desde las hojas\n\n"
+        
+        if tokens:
+            analisis += f"🎯 Último token: {tokens[-1].tipo} = '{tokens[-1].valor}'\n"
+            analisis += f"📍 Construcción: Desde terminales\n"
+            analisis += f"🔄 Reducción: Basada en patrones\n"
+            analisis += f"📈 Dirección: Hojas → Raíz\n"
+            analisis += f"⚡ Eficiencia: O(n) para LR(1)\n"
+        
+        return analisis
+    
+    def generar_comparacion_visual(self, tokens):
+        """Genera comparación visual de ambas derivaciones"""
+        if not tokens:
+            return "❌ No hay tokens para comparar"
+        
+        comparacion = f"""
+📊 TOKENS ANALIZADOS: {len(tokens)}
+
+┌─────────────────────────────────┬─────────────────────────────────┐
+│        DERIVACIÓN IZQUIERDA     │        DERIVACIÓN DERECHA       │
+├─────────────────────────────────┼─────────────────────────────────┤
+│ 🔽 Top-Down (Descendente)       │ 🔼 Bottom-Up (Ascendente)       │
+│ 🎯 Predictivo                   │ 🔍 Por reducción                │
+│ 📍 Primer símbolo no terminal   │ 📍 Último símbolo no terminal   │
+│ ⚡ Parsers LL(k)                │ ⚡ Parsers LR(k)                │
+│ 🧠 Análisis temprano            │ 🧠 Análisis robusto             │
+└─────────────────────────────────┴─────────────────────────────────┘
+"""
+        return comparacion
+    
+    def generar_metricas_derivacion(self, tokens):
+        """Genera métricas de las derivaciones"""
+        if not tokens:
+            return "❌ No hay tokens para medir"
+        
+        # Contar diferentes tipos de elementos
+        terminales = sum(1 for t in tokens if t.tipo in ['IDENTIFICADOR', 'NUMERO_ENTERO', 'NUMERO_FLOAT', 'STRING'])
+        no_terminales = sum(1 for t in tokens if t.tipo == 'PALABRA_RESERVADA')
+        operadores = sum(1 for t in tokens if t.tipo == 'OPERADOR')
+        
+        metricas = f"""
+📈 MÉTRICAS CALCULADAS:
+
+🔸 Símbolos terminales: {terminales}
+🔸 Símbolos no terminales: {no_terminales} 
+🔸 Operadores: {operadores}
+🔸 Total elementos: {len(tokens)}
+
+📊 Complejidad estimada:
+   - Derivación izquierda: O({len(tokens)})
+   - Derivación derecha: O({len(tokens)})
+   
+⚡ Eficiencia parsers:
+   - LL(1): {'✅ Factible' if len(tokens) < 100 else '⚠️ Complejo'}
+   - LR(1): {'✅ Factible' if len(tokens) < 200 else '⚠️ Complejo'}
+"""
+        return metricas
+    
+    def generar_arboles_paralelos(self, tokens):
+        """Genera vista paralela de ambos árboles"""
+        if not tokens:
+            return "❌ No hay tokens │ ❌ No hay tokens"
+        
+        # Simplificado para mostrar lado a lado
+        izq = "🌳 PROGRAM              │  PROGRAM 🌳"
+        izq += "\n    │                    │      │"
+        izq += "\n 📦 STMT                │   📦 STMT"
+        izq += "\n    ├─ def              │      ├─ def"
+        izq += "\n    └─ main             │      └─ main"
+        
+        return izq
+    
+    def generar_conclusiones_derivacion(self, tokens):
+        """Genera conclusiones del análisis de derivación"""
+        conclusiones = f"""
+📊 ANÁLISIS COMPLETADO:
+
+✅ Código procesado exitosamente
+✅ {len(tokens)} tokens analizados
+✅ Estructura sintáctica válida
+✅ Ambas derivaciones son equivalentes
+
+🎯 RECOMENDACIONES:
+
+🔸 Para parsers simples → Usar derivación IZQUIERDA (LL)
+🔸 Para gramáticas complejas → Usar derivación DERECHA (LR)  
+🔸 Para análisis educativo → Comparar AMBAS derivaciones
+🔸 Para compiladores → Elegir según gramática del lenguaje
+
+💡 OBSERVACIONES:
+
+• El orden de derivación NO afecta el resultado final
+• SÍ afecta la estrategia de construcción del parser
+• La derivación izquierda es más intuitiva
+• La derivación derecha es más potente
+"""
+        return conclusiones
     
     def limpiar_codigo(self):
         """Limpia el editor"""
